@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IRIS Base Station - Lane Detection Monitor</title>
+    <title>IRIS Base Station - HIBECI Monitor</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="styles.css">
     <script>
@@ -289,7 +289,7 @@
                     <img src="logo.svg" alt="IRIS Logo" class="h-8">
                     <div>
                         <h1 class="text-xl font-bold">IRIS Base Station</h1>
-                        <p class="text-xs text-[hsl(240,5%,64.9%)]">Lane Detection Monitor</p>
+                        <p class="text-xs text-[hsl(240,5%,64.9%)]">HIBECI Monitor</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-4">
@@ -343,6 +343,20 @@
                 <button id="connectBtn" class="btn btn-primary">Connect</button>
                 <button id="disconnectBtn" class="btn btn-danger" disabled>Disconnect</button>
                 <button id="clearLogsBtn" class="btn btn-secondary ml-auto">Clear Logs</button>
+            </div>
+        </div>
+
+    <main class="container mx-auto px-6 py-6">
+        <div class="card mb-6">
+            <h2 class="text-lg font-semibold mb-4">Control Settings</h2>
+            
+            <div class="flex gap-4 items-center">
+                <label class="text-sm font-medium">Gass ngeng:</label>
+                
+                <button id="startButton" class="btn badge-success" disabled>START</button>
+                <button id="stopButton" class="btn btn-danger" disabled>STOP</button>
+                
+                <p class="text-sm text-yellow-500 ml-4 hidden" id="statusMessage">Awaiting command...</p>
             </div>
         </div>
 
