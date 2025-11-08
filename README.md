@@ -10,7 +10,7 @@
 </p>
 <h4>LAPTOP</h4>
 <p><ul>Main control robot</ul>
-<ul>Aku pake piton</ul> 
+<ul>Aku pake piton</ul>
 <ul>Base Station aku edit dikit dari Base Station FP1</ul>
 <ul>Tampilan data yang sudah ada sebelumnya:<br>
 -Speed<br>
