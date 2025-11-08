@@ -1,6 +1,7 @@
 # Ijul IRIS CUP Archive
 
 <p>bismillah aja dulu</p>
+<<<<<<< HEAD
 <h2>FLOW PROGRAM</h2>
 <p>HP(IP WEBCAM) --(WIFI/TCP)--> Laptop(main control program) --(WIFI/TCP)--> ESP32 --(selanjutnya urusan electrical)</p>
 <h3>Detail</h3>
@@ -25,3 +26,6 @@
 </p>
 <h4>ESP32</h4>
 <p><ul>cuman buat ngehubungin laptop ke ESP32 niatnya pakai WIFI</ul></p>
+=======
+
+>>>>>>> f6d8105b6890e84e7df365adec1e31935a42f8c9
