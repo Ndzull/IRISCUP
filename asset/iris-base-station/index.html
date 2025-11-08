@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IRIS Base Station - Lane Detection Monitor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        border: 'hsl(240 3.7% 15.9%)',
+                        input: 'hsl(240 3.7% 15.9%)',
+                        ring: 'hsl(240 4.9% 83.9%)',
+                        background: 'hsl(240 10% 3.9%)',
+                        foreground: 'hsl(0 0% 98%)',
+                        primary: {
+                            DEFAULT: 'hsl(0 0% 98%)',
+                            foreground: 'hsl(240 5.9% 10%)',
+                        },
+                        secondary: {
+                            DEFAULT: 'hsl(240 3.7% 15.9%)',
+                            foreground: 'hsl(0 0% 98%)',
+                        },
+                        muted: {
+                            DEFAULT: 'hsl(240 3.7% 15.9%)',
+                            foreground: 'hsl(240 5% 64.9%)',
+                        },
+                        accent: {
+                            DEFAULT: 'hsl(240 3.7% 15.9%)',
+                            foreground: 'hsl(0 0% 98%)',
+                        },
+                        card: {
+                            DEFAULT: 'hsl(240 10% 3.9%)',
+                            foreground: 'hsl(0 0% 98%)',
+                        },
+                    },
+                    borderRadius: {
+                        lg: '0.5rem',
+                        md: '0.375rem',
+                        sm: '0.25rem',
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background-color: hsl(240 10% 3.9%);
+            color: hsl(0 0% 98%);
+        }
+
+        .card {
+            background-color: hsl(240 10% 3.9%);
+            border: 1px solid hsl(240 3.7% 15.9%);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background-color: hsl(0 0% 98%);
+            color: hsl(240 5.9% 10%);
+        }
+
+        .btn-primary:hover {
+            background-color: hsl(0 0% 90%);
+        }
+
+        .btn-secondary {
+            background-color: hsl(240 3.7% 15.9%);
+            color: hsl(0 0% 98%);
+        }
+
+        .btn-secondary:hover {
+            background-color: hsl(240 3.7% 20%);
+        }
+
+        .btn-danger {
+            background-color: hsl(0 62.8% 30.6%);
+            color: hsl(0 0% 98%);
+        }
+
+        .btn-danger:hover {
+            background-color: hsl(0 62.8% 35%);
+        }
+
+        .input {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            background-color: hsl(240 10% 3.9%);
+            border: 1px solid hsl(240 3.7% 15.9%);
+            border-radius: 0.375rem;
+            color: hsl(0 0% 98%);
+            font-size: 0.875rem;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: hsl(240 4.9% 83.9%);
+            box-shadow: 0 0 0 2px hsla(240, 4.9%, 83.9%, 0.1);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.625rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background-color: hsl(142 76% 36% / 0.2);
+            color: hsl(142 76% 56%);
+        }
+
+        .badge-error {
+            background-color: hsl(0 62.8% 30.6% / 0.2);
+            color: hsl(0 62.8% 50.6%);
+        }
+
+        .badge-warning {
+            background-color: hsl(38 92% 50% / 0.2);
+            color: hsl(38 92% 60%);
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background-color: hsl(240 3.7% 15.9%);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-container canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .video-placeholder {
+            color: hsl(240 5% 64.9%);
+            font-size: 0.875rem;
+        }
+
+        .metric-value {
+            font-size: 2.25rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: hsl(240 5% 64.9%);
+            margin-top: 0.5rem;
+        }
+
+        .status-indicator {
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 9999px;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+
+        .status-connected {
+            background-color: hsl(142 76% 56%);
+            box-shadow: 0 0 8px hsl(142 76% 56%);
+        }
+
+        .status-disconnected {
+            background-color: hsl(0 62.8% 50.6%);
+        }
+
+        .log-container {
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            line-height: 1.5;
+        }
+
+        .log-entry {
+            padding: 0.25rem 0;
+            border-bottom: 1px solid hsl(240 3.7% 15.9%);
+        }
+
+        .log-timestamp {
+            color: hsl(240 5% 64.9%);
+            margin-right: 0.5rem;
+        }
+
+        .log-info {
+            color: hsl(199 89% 48%);
+        }
+
+        .log-success {
+            color: hsl(142 76% 56%);
+        }
+
+        .log-error {
+            color: hsl(0 62.8% 50.6%);
+        }
+
+        .log-warning {
+            color: hsl(38 92% 60%);
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: hsl(240 3.7% 15.9%);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: hsl(240 5% 64.9%);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: hsl(240 5% 74.9%);
+        }
+
+        .steering-gauge {
+            position: relative;
+            width: 200px;
+            height: 100px;
+            margin: 0 auto;
+        }
+
+        .gauge-arc {
+            stroke: hsl(240 3.7% 15.9%);
+            fill: none;
+            stroke-width: 8;
+        }
+
+        .gauge-value {
+            stroke: hsl(142 76% 56%);
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.3s ease;
+        }
+
+        .gauge-needle {
+            stroke: hsl(0 0% 98%);
+            stroke-width: 2;
+            transition: transform 0.3s ease;
+            transform-origin: 100px 100px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="border-b border-[hsl(240,3.7%,15.9%)] sticky top-0 z-50 bg-[hsl(240,10%,3.9%)]">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <img src="logo.svg" alt="IRIS Logo" class="h-8">
+                    <div>
+                        <h1 class="text-xl font-bold">IRIS Base Station</h1>
+                        <p class="text-xs text-[hsl(240,5%,64.9%)]">Lane Detection Monitor</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center">
+                        <span class="status-indicator" id="connectionStatus"></span>
+                        <span class="text-sm" id="connectionText">Disconnected</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-6">
+        <!-- Connection Settings -->
+        <div class="card mb-6">
+            <h2 class="text-lg font-semibold mb-4">Connection Settings</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Connection Type</label>
+                    <select id="connectionType" class="input">
+                        <option value="websocket">Standard WebSocket</option>
+                        <option value="ros">ROS (roslibjs)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Server URL</label>
+                    <input type="text" id="serverUrl" class="input" placeholder="ws://localhost:8080" value="ws://localhost:8080">
+                </div>
+            </div>
+
+            <!-- ROS Specific Settings (Hidden by default) -->
+            <div id="rosSettings" class="hidden mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Image Raw Topic</label>
+                        <input type="text" id="rosTopicRaw" class="input" placeholder="/camera/image_raw" value="/camera/image_raw">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Image Processed Topic</label>
+                        <input type="text" id="rosTopicProcessed" class="input" placeholder="/camera/image_processed" value="/camera/image_processed">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Steering Topic</label>
+                        <input type="text" id="rosTopicSteering" class="input" placeholder="/vehicle/steering" value="/vehicle/steering">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <button id="connectBtn" class="btn btn-primary">Connect</button>
+                <button id="disconnectBtn" class="btn btn-danger" disabled>Disconnect</button>
+                <button id="clearLogsBtn" class="btn btn-secondary ml-auto">Clear Logs</button>
+            </div>
+        </div>
+
+        <!-- Video Streams -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Raw Image -->
+            <div class="card">
+                <h3 class="text-md font-semibold mb-3">Raw Camera Feed</h3>
+                <div class="video-container">
+                    <canvas id="rawCanvas"></canvas>
+                    <div class="video-placeholder" id="rawPlaceholder">Waiting for video stream...</div>
+                </div>
+                <div class="mt-3 flex items-center justify-between text-sm">
+                    <span class="text-[hsl(240,5%,64.9%)]">FPS: <span id="rawFps">0</span></span>
+                    <span class="text-[hsl(240,5%,64.9%)]">Resolution: <span id="rawResolution">-</span></span>
+                </div>
+            </div>
+
+            <!-- Processed Image -->
+            <div class="card">
+                <h3 class="text-md font-semibold mb-3">Processed Image (Threshold)</h3>
+                <div class="video-container">
+                    <canvas id="processedCanvas"></canvas>
+                    <div class="video-placeholder" id="processedPlaceholder">Waiting for video stream...</div>
+                </div>
+                <div class="mt-3 flex items-center justify-between text-sm">
+                    <span class="text-[hsl(240,5%,64.9%)]">FPS: <span id="processedFps">0</span></span>
+                    <span class="text-[hsl(240,5%,64.9%)]">Resolution: <span id="processedResolution">-</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Telemetry Data -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <!-- Steering Angle -->
+            <div class="card">
+                <h3 class="text-md font-semibold mb-4">Steering Angle</h3>
+                <div class="steering-gauge">
+                    <svg width="200" height="100" viewBox="0 0 200 100">
+                        <path class="gauge-arc" d="M 20 100 A 80 80 0 0 1 180 100" />
+                        <path class="gauge-value" id="gaugeValue" d="M 20 100 A 80 80 0 0 1 180 100" stroke-dasharray="251.2" stroke-dashoffset="125.6" />
+                        <line class="gauge-needle" id="gaugeNeedle" x1="100" y1="100" x2="100" y2="30" />
+                    </svg>
+                </div>
+                <div class="text-center mt-2">
+                    <div class="metric-value" id="steeringValue">0°</div>
+                    <div class="metric-label">Current Angle</div>
+                </div>
+            </div>
+
+            <!-- Simplified Lane Detection card - removed dropdown, show only Lane Status, Speed, and Jarak Tempuh -->
+            <div class="card">
+                <h3 class="text-md font-semibold mb-4">Lane Detection</h3>
+                <div class="space-y-4">
+                    <div>
+                        <div class="text-sm text-[hsl(240,5%,64.9%)] mb-1">Lane Status</div>
+                        <span class="badge badge-success" id="laneStatus">Detected</span>
+                    </div>
+                    <div>
+                        <div class="text-sm text-[hsl(240,5%,64.9%)] mb-1">Speed (Optional)</div>
+                        <div class="metric-value text-2xl" id="speedValue">0 cm/s</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-[hsl(240,5%,64.9%)] mb-1">Jarak Tempuh</div>
+                        <div class="metric-value text-2xl" id="jarakTempuhValue">0 m</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Obstacle Detection (Optional) -->
+            <div class="card">
+                <h3 class="text-md font-semibold mb-4">Obstacle Detection</h3>
+                <div class="space-y-4">
+                    <div>
+                        <div class="text-sm text-[hsl(240,5%,64.9%)] mb-1">Obstacle Detected</div>
+                        <span class="badge badge-success" id="obstacleStatus">None</span>
+                    </div>
+                    <div>
+                        <div class="text-sm text-[hsl(240,5%,64.9%)] mb-1">Distance (cm)</div>
+                        <div class="metric-value text-2xl" id="obstacleDistance">- cm</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-[hsl(240,5%,64.9%)] mb-1">Position</div>
+                        <div class="text-lg font-semibold" id="obstaclePosition">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Logs -->
+        <div class="card">
+            <h3 class="text-md font-semibold mb-3">System Logs</h3>
+            <div class="log-container" id="logContainer">
+                <div class="log-entry">
+                    <span class="log-timestamp">[00:00:00]</span>
+                    <span class="log-info">System initialized. Ready to connect.</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
