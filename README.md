@@ -1,7 +1,7 @@
 # Ijul IRIS CUP Archive
 
 <p>bismillah aja dulu</p>
-<<<<<<< HEAD
+
 <h2>FLOW PROGRAM</h2>
 <p>HP(IP WEBCAM) --(WIFI/TCP)--> Laptop(main control program) --(WIFI/TCP)--> ESP32 --(selanjutnya urusan electrical)</p>
 <h3>Detail</h3>
