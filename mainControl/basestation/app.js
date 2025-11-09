@@ -51,6 +51,25 @@ class BaseStation {
     this.log("System initialized. Ready to connect.", "info");
   }
 
+  // Di dalam class BaseStation
+
+  /**
+   * Ngirim perintah kontrol (start/stop) ke Piton lewat websocket.
+   */
+  sendCommand(command) {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+          const control_message = {
+              type: "control",
+              command: command 
+          };
+          // ngirim json ke piton
+          this.ws.send(JSON.stringify(control_message));
+          this.log(`Sent command: ${command}`, "info");
+      } else {
+          this.log(`Cannot send ${command}. WebSocket not connected.`, "error");
+      }
+  }
+
   /**
    * Initialize all event listeners
    */
@@ -88,6 +107,16 @@ class BaseStation {
     // Clear logs button
     document.getElementById("clearLogsBtn").addEventListener("click", () => {
       this.clearLogs();
+    });
+
+    // Start button
+    document.getElementById("startButton").addEventListener("click", () => {
+        this.sendCommand("start");
+    });
+
+    // Stop button
+    document.getElementById("stopButton").addEventListener("click", () => {
+        this.sendCommand("stop");
     });
   }
 
@@ -419,17 +448,23 @@ class BaseStation {
     const statusText = document.getElementById("connectionText");
     const connectBtn = document.getElementById("connectBtn");
     const disconnectBtn = document.getElementById("disconnectBtn");
+    const startBtn = document.getElementById("startButton");
+    const stopBtn = document.getElementById("stopButton");
 
     if (connected) {
       statusIndicator.className = "status-indicator status-connected";
       statusText.textContent = "Connected";
       connectBtn.disabled = true;
       disconnectBtn.disabled = false;
+      startBtn.disabled = false; 
+      stopBtn.disabled = false;
     } else {
       statusIndicator.className = "status-indicator status-disconnected";
       statusText.textContent = "Disconnected";
       connectBtn.disabled = false;
       disconnectBtn.disabled = true;
+      startBtn.disabled = true; 
+      stopBtn.disabled = true;
     }
   }
 
