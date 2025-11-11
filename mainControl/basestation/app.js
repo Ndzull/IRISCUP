@@ -37,7 +37,8 @@ class BaseStation {
       steering_angle: 0,
       laneStatus: "Unknown",
       speed: 0,
-      jarakTempuh: 0,
+      /*jarakTempuh: 0,*/
+      robotPosition: "center",
       laneWidth: 0,
       deviation: 0,
       obstacleDetected: false,

@@ -416,12 +416,12 @@
                         <span class="badge badge-success" id="laneStatus">Detected</span>
                     </div>
                     <div>
-                        <div class="text-sm text-[hsl(240,5%,64.9%)] mb-1">Speed (Optional)</div>
+                        <div class="text-sm text-[hsl(240,5%,64.9%)] mb-1">Speed</div>
                         <div class="metric-value text-2xl" id="speedValue">0 cm/s</div>
                     </div>
                     <div>
-                        <div class="text-sm text-[hsl(240,5%,64.9%)] mb-1">Jarak Tempuh</div>
-                        <div class="metric-value text-2xl" id="jarakTempuhValue">0 m</div>
+                        <div class="text-sm text-[hsl(240,5%,64.9%)] mb-1">Robot Position</div>
+                        <span class="badge badge-success" id="robotPosition">Unknown</span>
                     </div>
                 </div>
             </div>
@@ -437,27 +437,16 @@
                     <div>
                         <div class="text-sm text-[hsl(240,5%,64.9%)] mb-1">Distance (cm)</div>
                         <div class="metric-value text-2xl" id="obstacleDistance">- cm</div>
-                    </div>s
+                    </div>
                     <div>
                         <div class="text-sm text-[hsl(240,5%,64.9%)] mb-1">Position</div>
-                        <div class="text-lg font-semibold" id="obstaclePosition">-</div>
+                        <span class="badge badge-success" id="obstaclePosition">Unknown</span>
                     </div>
                 </div>
             </div>
+    </main>
 
-            <!--Robot Position Tracker-->
-            <div class="card">
-                    <h3 class="text-md font-semibold mb-4">Robot Tracker</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <div class="text-sm text-[hsl(240,5%,64.9%)] mb-1">Robot Position</div>
-                            <span class="badge badge-success" id="laneStatus">Unknown</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        <!-- System Logs -->
+    <!-- System Logs -->
         <div class="card">
             <h3 class="text-md font-semibold mb-3">System Logs</h3>
             <div class="log-container" id="logContainer">
@@ -467,7 +456,6 @@
                 </div>
             </div>
         </div>
-    </main>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
