@@ -39,4 +39,8 @@
 <p>disini aku solve sesuatu dan menambah error baru, solve sesuatu dan menambah error baru lagi</p>
 <p>aku wes dapat informasi jobdesk aKu gmn</p>
 <h3>10 November 2025</h3>
+<<<<<<< HEAD
 <p>sek mas baru dateng bengkel</p>
+=======
+<p>sek mas baru dateng bengkel</p>
+>>>>>>> e125b3a06b738a47f6b41e6c7e975cb1ecde85a0
