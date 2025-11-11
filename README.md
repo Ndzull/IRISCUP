@@ -26,3 +26,17 @@
 </p>
 <h4>ESP32</h4>
 <p><ul>cuman buat ngehubungin laptop ke ESP32 niatnya pakai WIFI</ul></p>
+
+<h2>ISI HATI IJUL</h2>
+<p>Mff mas mesoh, ini definisi menikmati proses</p>
+<h3>7 November 2025</h3>
+<p>Jujur masih bingung kira-kira gimana ya hubungin program ke robotnya, takut jalan aja gx bisa njir &#128128</p>
+<h3>8 November 2025</h3>
+<p>Coba cicil control panel a.k.a BS dulu deh, jujur agak takut</p>
+<h3>9 November 2025</h3>
+<p>Tampilan udah oke, tp ngiseng e iki connection bs ku kok bosok yo</p>
+<p>Mechanical baru eksekusi robotnya skrng, aku no info electric gmn, gx pernah reach out klo bkn aku yang chat duluan</p>
+<p>disini aku solve sesuatu dan menambah error baru, solve sesuatu dan menambah error baru lagi</p>
+<p>aku wes dapat informasi jobdesk aKu gmn</p>
+<h3>10 November 2025</h3>
+<p>sek mas baru dateng bengkel</p>

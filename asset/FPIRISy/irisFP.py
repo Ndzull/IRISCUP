@@ -8,11 +8,11 @@ import math
 import time
 import os
 
-URL_KAMERA = 'http://10.108.152.171:8080/video'       #http://10.136.200.208:8080/video http://10.36.177.25:8080/video http://10.108.152.171:8080/video
-URI_BS_WS = "ws://localhost:8080"  #base station
+URL_KAMERA = 'http://10.108.152.171:8080/video' #http://10.136.200.208:8080/video http://10.36.177.25:8080/video http://10.108.152.171:8080/video
+URI_BS_WS = "ws://localhost:8080" #base station
 UDP_LISTEN_IP = '0.0.0.0' #untuk ngebaca realtime speed
 UDP_LISTEN_PORT = 50001 
-TARGET_FPS = 30        #set target fps (10 biar ngga ngelag tp tetep sama aja)
+TARGET_FPS = 30        #set target fps 
 PIXEL_TO_METER = 0.01  #meter per pixel, 1 pixel = 1 cm (untuk optical flow)
 MIN_FEATURES = 8       #min. titik optical flow yang kelacak
 MAX_CORNERS = 80       #maks. titik optical flow yang dilacak
