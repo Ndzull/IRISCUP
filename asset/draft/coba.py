@@ -17,7 +17,7 @@ WS_SERVER_PORT = 8080
 UDP_LISTEN_IP = "0.0.0.0"
 UDP_LISTEN_PORT = 50001
 
-ESP32_IP = "192.168.4.1" #ganti sesuai ip esp
+ESP32_IP = "10.234.118.52" #ganti sesuai ip esp
 ESP32_PORT = 50002
 
 TARGET_FPS = 30
@@ -44,6 +44,10 @@ CAP.set(cv2.CAP_PROP_FPS, TARGET_FPS)
 CAP.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
 CAP.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
 
+actual_width = int(CAP.get(cv2.CAP_PROP_FRAME_WIDTH))
+actual_height = int(CAP.get(cv2.CAP_PROP_FRAME_HEIGHT))
+if actual_width != FRAME_WIDTH or actual_height != FRAME_HEIGHT:
+    print(f"[WARN] Failed to set resolution to {FRAME_WIDTH}x{FRAME_HEIGHT}. Actual: {actual_width}x{actual_height}. Will rely on resizing in main_loop.")
 # CAP.set(cv2.CAP_PROP_FPS, TARGET_FPS)
 # CAP.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
 # CAP.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
@@ -260,14 +264,13 @@ async def ws_recv_loop(ws):
                 elif cmd == "reset_distance":
                     REAL_TIME_DISTANCE = 0.0
                     LAST_TIME = time.time()
-            # other messages may be handled here
     except websockets.exceptions.ConnectionClosed:
         pass
     except Exception as e:
         print(f"[WS recv error] {e}")
 
 async def ws_sender_periodic(ws):
-    img_interval = 1.0 / max(1, int(TARGET_FPS/2))
+    img_interval = 1.0 / max(1, int(TARGET_FPS))
     last_img = 0.0
     try:
         while True:
@@ -296,6 +299,8 @@ async def ws_sender_periodic(ws):
             if now - last_img > img_interval:
                 ret, frame = CAP.read()
                 if ret:
+                    if frame.shape[1] != FRAME_WIDTH or frame.shape[0] != FRAME_HEIGHT:
+                        frame = cv2.resize(frame, (FRAME_WIDTH, FRAME_HEIGHT)) # Tambahan resize jika capture gagal set resolusi
                     combined, _, _, _, _ = detect_lane_bev_and_angle(frame)
                     raw_b64 = encode_image_to_base64(frame, quality=25)
                     proc_b64 = encode_image_to_base64(combined, quality=25)

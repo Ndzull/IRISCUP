@@ -37,8 +37,8 @@ class BaseStation {
       steering_angle: 0,
       laneStatus: "Unknown",
       speed: 0,
-      /*jarakTempuh: 0,*/
-      robotPosition: "center",
+      //jarakTempuh: 0
+      robotPosition: "center", 
       laneWidth: 0,
       deviation: 0,
       obstacleDetected: false,
@@ -66,6 +66,13 @@ class BaseStation {
           // ngirim json ke piton
           this.ws.send(JSON.stringify(control_message));
           this.log(`Sent command: ${command}`, "info");
+          const statusEl = document.getElementById("statusMessage");
+          if (statusEl) {
+              if (command === "start") statusEl.textContent = "Autonomous Mode ON.";
+              else if (command === "stop") statusEl.textContent = "Robot stopped by operator.";
+              else if (command === "reset_distance") statusEl.textContent = "Distance reset sent.";
+              statusEl.classList.remove("hidden");
+          }
       } else {
           this.log(`Cannot send ${command}. WebSocket not connected.`, "error");
       }
@@ -110,16 +117,16 @@ class BaseStation {
       this.clearLogs();
     });
 
-    // Start button
-    document.getElementById("startButton").addEventListener("click", () => {
-        this.sendCommand("start");
-    });
+    const startBtn = document.getElementById("startButton");
+    const stopBtn = document.getElementById("stopButton");
+    const resetBtn = document.getElementById("resetButton");
 
-    // Stop button
-    document.getElementById("stopButton").addEventListener("click", () => {
-        this.sendCommand("stop");
-    });
+    if (startBtn) startBtn.addEventListener("click", () => this.sendCommand("start"));
+    if (stopBtn) stopBtn.addEventListener("click", () => this.sendCommand("stop"));
+    if (resetBtn) resetBtn.addEventListener("click", () => this.sendCommand("reset_distance"));
   }
+
+
 
   /**
    * Connect to server based on connection type
@@ -372,6 +379,14 @@ class BaseStation {
         (data.laneStatus === "Detected" ? "badge-success" : "badge-warning");
     }
 
+    if (data.robotPosition !== undefined) {
+        const posBadge = document.getElementById("robotPosition"); // ID HTML sudah ada di template Anda
+        posBadge.textContent = data.robotPosition;
+        posBadge.className = "badge " + 
+            (data.robotPosition === "center" ? "badge-success" : 
+             data.robotPosition === "left" || data.robotPosition === "right" ? "badge-warning" : "badge-secondary");
+    }
+
     if (data.speed !== undefined) {
       document.getElementById("speedValue").textContent = `${data.speed.toFixed(
         1
@@ -451,6 +466,7 @@ class BaseStation {
     const disconnectBtn = document.getElementById("disconnectBtn");
     const startBtn = document.getElementById("startButton");
     const stopBtn = document.getElementById("stopButton");
+    const resetBtn = document.getElementById("resetButton");  
 
     if (connected) {
       statusIndicator.className = "status-indicator status-connected";
@@ -459,6 +475,7 @@ class BaseStation {
       disconnectBtn.disabled = false;
       startBtn.disabled = false; 
       stopBtn.disabled = false;
+      resetBtn.disabled = false; // Aktifkan Reset
     } else {
       statusIndicator.className = "status-indicator status-disconnected";
       statusText.textContent = "Disconnected";
@@ -466,6 +483,7 @@ class BaseStation {
       disconnectBtn.disabled = true;
       startBtn.disabled = true; 
       stopBtn.disabled = true;
+      resetBtn.disabled = true; // Non-aktifkan Reset
     }
   }
 
