@@ -2,165 +2,236 @@ import asyncio
 import websockets
 import socket
 import json
-from typing import Tuple, Any, Dict, Set, Optional
+from typing import Any, Dict, Set, Optional
 
-# =================================================================
-# CLASS: UDP SENSOR PROTOCOL (Receiver)
-# =================================================================
 
 class SensorUDPProtocol(asyncio.DatagramProtocol):
-    """Menerima paket data sensor (Speed, Obstacle) dari ESP32."""
+    """Nerima data sensor (speed, obstacle) dari ESP32 via UDP."""
     def __init__(self, manager):
         self.manager = manager
-        
+
     def datagram_received(self, data, addr):
-        txt = None
         try:
             txt = data.decode("utf-8").strip()
-            
-            # --- Logic Parsing Data Masuk (Speed dan Obstacle) ---
-            
-            # 1. Parsing Speed: Format "S:25.5"
+
+            # Format kecepatan: S:0.50
             if txt.startswith("S:"):
-                speed = float(txt.split(":")[1].strip())
-                self.manager.REAL_TIME_SPEED = speed
-                
-            # 2. Parsing Obstacle: Format "OBS:L:45"
+                self.manager.REAL_TIME_SPEED = float(txt.split(":")[1])
+
+            # Format obstacle: OBS:L:30.5 atau OBS:R:25.0
             elif txt.startswith("OBS:"):
                 parts = txt.split(":")
                 if len(parts) >= 3:
-                    pos_code = parts[1].strip().upper() # L atau R
-                    dist = float(parts[2].strip()) if parts[2].strip().replace('.', '', 1).isdigit() else None
-                    
-                    # Hanya terima L atau R untuk posisi
-                    if pos_code in ("L", "R"):
-                        self.manager.CURRENT_OBSTACLE_INFO["detected"] = True
-                        self.manager.CURRENT_OBSTACLE_INFO["distance"] = dist
-                        self.manager.CURRENT_OBSTACLE_INFO["position"] = "left" if pos_code == "L" else "right"
-                    
-                    # Jika sensor mengirim 0 atau None (Clear)
-                    elif dist is not None and dist == 0.0:
-                         self.manager.CURRENT_OBSTACLE_INFO = {"detected": False, "position": None, "distance_cm": None}
-            
-        except Exception:
-            # Mengabaikan paket data yang rusak
-            pass 
+                    pos_code = parts[1].strip().upper()
+                    dist_raw = parts[2].strip()
 
+                    # cek apakah angka valid
+                    try:
+                        dist = float(dist_raw)
+                    except ValueError:
+                        dist = None
 
-# =================================================================
-# CLASS: COMMUNICATION MANAGER (INTI JARINGAN & STATE)
-# =================================================================
+                    if dist is not None:
+                        self.manager.CURRENT_OBSTACLE_INFO = {
+                            "detected": True,
+                            "position": "left" if pos_code == "L" else "right",
+                            "distance_cm": dist,
+                        }
+                    elif dist == 0.0:
+                        self.manager.CURRENT_OBSTACLE_INFO = {
+                            "detected": False,
+                            "position": None,
+                            "distance_cm": None,
+                        }
+
+            # Format alternatif JSON
+            else:
+                j = json.loads(txt)
+                if isinstance(j, dict):
+                    if "speed" in j:
+                        self.manager.REAL_TIME_SPEED = float(j["speed"])
+                    if "obstacle_detected" in j:
+                        self.manager.CURRENT_OBSTACLE_INFO["detected"] = bool(j["obstacle_detected"])
+                    if "obstacle_position" in j:
+                        self.manager.CURRENT_OBSTACLE_INFO["position"] = j["obstacle_position"]
+                    if "distance_obstacle" in j:
+                        try:
+                            self.manager.CURRENT_OBSTACLE_INFO["distance_cm"] = float(j["distance_obstacle"])
+                        except:
+                            self.manager.CURRENT_OBSTACLE_INFO["distance_cm"] = None
+
+        except Exception as e:
+            print(f"[UDP ERROR] {e}")
+
 
 class CommunicationManager:
-    """
-    Mengelola semua koneksi jaringan (UDP Sensor, UDP Control, WebSocket Server) 
-    dan menyimpan state telemetry global.
-    """
+    """Mengatur UDP sensor (ESP32 → PC), UDP kontrol (PC → ESP32), dan WebSocket (ke Base Station)."""
+
     def __init__(self, ws_port: int, udp_sensor_port: int, udp_control_ip: str, udp_control_port: int):
-        # Konfigurasi Jaringan
+        # --- konfigurasi jaringan
         self.WS_PORT = ws_port
         self.UDP_SENSOR_PORT = udp_sensor_port
         self.UDP_CONTROL_IP = udp_control_ip
         self.UDP_CONTROL_PORT = udp_control_port
-        
-        # State Global Telemetry (Dibagikan dengan Vision dan Control)
+
+        # --- status telemetry
         self.REAL_TIME_SPEED = 0.0
         self.REAL_TIME_DISTANCE = 0.0
-        self.RUNNING = False  # Flag START/STOP dari BS
-        self.CURRENT_OBSTACLE_INFO: Dict[str, Any] = {"detected": False, "position": None, "distance": None}
-        
-        self.CLIENTS: Set[Any] = set() # Set klien WebSocket yang terhubung
-        
-        # Socket UDP untuk Mengirim Perintah Kontrol (Harus dibuat di awal)
+        self.RUNNING = False
+        self.CURRENT_OBSTACLE_INFO: Dict[str, Any] = {"detected": False, "position": None, "distance_cm": None}
+
+        # --- websocket client set
+        self.CLIENTS: Set[websockets.WebSocketServerProtocol] = set()
+
+        # --- socket UDP untuk kirim kontrol ke ESP32
         self.udp_cmd_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.udp_cmd_sock.setblocking(False)
 
-    
     # -------------------------------------------------------------
-    # FUNGSI KONTROL & BROADCAST
+    # UDP: Kirim perintah ke ESP32
     # -------------------------------------------------------------
-
-    def send_control_command(self, steer_angle: float, speed_cmd: float):
-        """Mengirim perintah kontrol motor ke ESP32 via UDP."""
-        # Format pengiriman: Misalnya "A:15.5,S:20.0"
-        cmd_str = f"A:{round(steer_angle, 2)},S:{round(speed_cmd, 2)}\n"
+    def send_control_command(self, steer_angle: float, motor_constant: float):
+        """Kirim perintah kontrol motor ke ESP32 via UDP."""
+        cmd_str = f"A:{round(steer_angle, 2)},M:{round(motor_constant, 2)}\n"
         try:
             self.udp_cmd_sock.sendto(cmd_str.encode("utf-8"), (self.UDP_CONTROL_IP, self.UDP_CONTROL_PORT))
-            print(f"[CMD OUT] Sent: {cmd_str.strip()}")
+            print(f"[UDP CMD OUT] {cmd_str.strip()}")
         except Exception as e:
-            print(f"[WARN] Failed to send control UDP: {e}")
-            
-    async def broadcast_telemetry(self, data: dict):
-        """Mengirim Telemetri JSON ke semua klien WebSocket yang terhubung."""
-        if not self.CLIENTS:
-            return
-        
-        msg = json.dumps(data)
-        to_remove = []
-        for ws in list(self.CLIENTS):
-            try:
-                await ws.send(msg)
-            except websockets.exceptions.ConnectionClosed:
-                to_remove.append(ws)
-            except Exception:
-                to_remove.append(ws)
-        for ws in to_remove:
-            self.CLIENTS.discard(ws)
-
+            print(f"[WARN] UDP send failed: {e}")
 
     # -------------------------------------------------------------
-    # FUNGSI SERVER & RECEIVER
+    # UDP: Listener sensor dari ESP32
     # -------------------------------------------------------------
-    
-    async def start_udp_listener(self):
-        """Memulai UDP Receiver untuk data sensor."""
+    async def udp_sensor_listener(self):
+        """Menyalakan listener UDP untuk menerima data sensor dari ESP32."""
         loop = asyncio.get_event_loop()
         try:
-            await loop.create_datagram_endpoint(
-                lambda: SensorUDPProtocol(self), # Memberikan instance manager ke protocol
-                local_addr=('0.0.0.0', self.UDP_SENSOR_PORT)
+            transport, _ = await loop.create_datagram_endpoint(
+                lambda: SensorUDPProtocol(self),
+                local_addr=("0.0.0.0", self.UDP_SENSOR_PORT)
             )
-            print(f"[COMM] UDP Sensor Listener active on port {self.UDP_SENSOR_PORT}")
+            print(f"[UDP] Listening on port {self.UDP_SENSOR_PORT}")
+            return transport
         except Exception as e:
-            print(f"[FATAL] Failed to start UDP Listener: {e}")
-            raise # Melemparkan error agar main loop tahu
+            print(f"[FATAL] Failed to start UDP listener: {e}")
 
+    # alias agar kompatibel dengan kode lama
+    async def start_udp_listener(self):
+        """Alias untuk kompatibilitas kode lama."""
+        return await self.udp_sensor_listener()
+
+    # -------------------------------------------------------------
+    # WEBSOCKET: kirim telemetry ke Base Station
+    # -------------------------------------------------------------
+    async def broadcast_telemetry(self, *payloads):
+        """
+        Kirim satu atau lebih payload (dict) ke semua WebSocket clients.
+        Contoh pemakaian:
+            await comm.broadcast_telemetry(telemetry_dict)
+            await comm.broadcast_telemetry(telemetry_dict, raw_image_dict, proc_image_dict)
+        """
+        # kompatibilitas: cari atribut clients yang ada ('CLIENTS' atau 'clients')
+        clients = getattr(self, "CLIENTS", None) or getattr(self, "clients", None)
+        if clients is None:
+            print("[BCAST WARN] No client set attribute found on CommunicationManager.")
+            return
+
+        if not clients:
+            # tidak ada client terhubung — logging ringan, jangan spam
+            # hanya satu baris log setiap pemanggilan
+            print("[BCAST] no clients connected — skipping broadcast")
+            return
+
+        # Untuk setiap payload, kirim ke semua client
+        for payload in payloads:
+            if not isinstance(payload, dict):
+                # skip non-dict payloads (safety)
+                print("[BCAST WARN] payload bukan dict, skip")
+                continue
+            msg = json.dumps(payload)
+            to_remove = []
+            sent_count = 0
+            for ws in list(clients):
+                try:
+                    await ws.send(msg)
+                    sent_count += 1
+                except Exception:
+                    to_remove.append(ws)
+            # Bersihkan client yang disconnect
+            for ws in to_remove:
+                try:
+                    clients.discard(ws)
+                except:
+                    pass
+            print(f"[BCAST] sent '{payload.get('type', '<no-type>')}' to {sent_count} clients")
+
+    # -------------------------------------------------------------
+    # WEBSOCKET: Handler command START/STOP
+    # -------------------------------------------------------------
     async def ws_receiver_loop(self, ws):
-        """Menerima perintah START/STOP/RESET dari Base Station."""
+        """Terima command START/STOP/RESET dari Base Station."""
         try:
             async for raw in ws:
                 msg = json.loads(raw)
-                if msg.get("type") == "control":
-                    cmd = msg.get("command", "").lower()
+
+                if msg.get("type") in ("command", "control"):
+                    cmd = msg.get("command") or msg.get("cmd", "")
+                    cmd = cmd.lower().strip()
+
                     if cmd == "start":
                         self.RUNNING = True
-                        print("[CMD] Received START signal.")
-                        # Kirim kecepatan awal/default saat START
-                        # Asumsi default speed 45.0
-                        self.send_control_command(0.0, 45.0) 
+                        print("[CMD] START diterima")
+                        self.send_control_command(0.0, 255.0)
+
                     elif cmd == "stop":
                         self.RUNNING = False
-                        print("[CMD] Received STOP signal.")
-                        self.send_control_command(0.0, 0.0) # Perintah Stop Darurat
+                        print("[CMD] STOP diterima")
+                        self.send_control_command(0.0, 0.0)
+
                     elif cmd == "reset_distance":
                         self.REAL_TIME_DISTANCE = 0.0
-                        print("[CMD] Distance reset.")
+                        print("[CMD] RESET distance")
         except websockets.exceptions.ConnectionClosed:
             pass
         except Exception as e:
-            print(f"[WS Receiver Error] {e}")
+            print(f"[WS ERROR] {e}")
 
-    async def ws_handler(self, ws, path):
-        """Handle incoming client connection (Base Station)."""
+    async def ws_handler(self, ws, path=None):
+        """Menangani koneksi baru dari Base Station."""
         print(f"[WS] Client connected: {ws.remote_address}")
         self.CLIENTS.add(ws)
-        
-        # Jalankan task receiver untuk klien ini
-        receiver = asyncio.create_task(self.ws_receiver_loop(ws)) 
-        
+
+        recv_task = asyncio.create_task(self.ws_receiver_loop(ws))
         try:
-            # Tunggu receiver berjalan (atau dibatalkan saat disconnect)
-            await receiver 
+            await recv_task
         finally:
             self.CLIENTS.discard(ws)
-            receiver.cancel()
+            recv_task.cancel()
             print(f"[WS] Client disconnected: {ws.remote_address}")
+
+    async def start_websocket_server(self):
+        """Menjalankan WebSocket server (untuk Base Station)."""
+        try:
+            server = await websockets.serve(self.ws_handler, "0.0.0.0", self.WS_PORT)
+            print(f"[WS] WebSocket server running on ws://0.0.0.0:{self.WS_PORT}")
+            return server
+        except Exception as e:
+            print(f"[FATAL] WebSocket server gagal jalan: {e}")
+
+    async def run(self):
+        """Main loop komunikasi (gabungan UDP & WS)."""
+        await self.start_udp_listener()
+        await self.start_websocket_server()
+
+        print("[COMM] Semua sistem komunikasi aktif.")
+        print("[COMM] Menunggu koneksi Base Station...")
+
+        while True:
+            await self.broadcast_telemetry()
+
+            if self.RUNNING:
+                print(
+                    f"[RT] Speed={self.REAL_TIME_SPEED:.2f} | "
+                    f"Obstacle={self.CURRENT_OBSTACLE_INFO}"
+                )
+            await asyncio.sleep(0.2)

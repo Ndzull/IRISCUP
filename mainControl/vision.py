@@ -95,7 +95,7 @@ class VisionProcessor:
             - overlay_frame (BGR, frame dengan garis deteksi)
             - avg_angle (float)
             - lane_status (Detected/Lost)
-            - robot_position (left/right/center/unknown)
+            - robot_position (left/rightunknown)
             - bev_mask_result (grayscale)
         """
         h, w = frame_bgr.shape[:2]
@@ -139,7 +139,7 @@ class VisionProcessor:
         
         # 4. Estimasi Posisi Robot (Menggunakan mask BEV)
         # Posisi dihitung berdasarkan BEV mask, bukan status Hough lines
-        robot_position = self.estimate_robot_lane_position(cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2GRAY), lane_status) 
+        robot_position = self.estimate_robot_lane_position(cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2GRAY)) 
         
         # Note: Pengembalian ini sedikit dimodifikasi dari pola lama untuk integrasi.
         return overlay, avg_angle, lane_status, robot_position, bev_mask

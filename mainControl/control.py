@@ -1,12 +1,9 @@
 from typing import Tuple, Optional, Dict, Any
 import math
 
-# --- KONFIGURASI KONTROL ---
-# Nilai batas yang akan digunakan di logic keputusan
-MAX_STEERING_ANGLE = 45.0  # Sudut kemudi maksimum yang diperbolehkan
-MAX_SPEED_CMD = 45.0       # Kecepatan maksimum yang diizinkan (cm/s)
-MIN_OBSTACLE_DIST = 20.0   # Jarak minimum aman sebelum STOP (cm)
-
+MAX_STEERING_ANGLE = 45.0  #sudut maks
+MAX_SPEED_CMD = 255.0       # Kecepatan maks motor dc
+MIN_OBSTACLE_DIST = 20.0   
 
 # =================================================================
 # CLASS: PID CONTROLLER (STANDAR ROBOTIKA)
