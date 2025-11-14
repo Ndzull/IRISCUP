@@ -97,9 +97,22 @@ async def lane_detection_handler(ws):
                 },
             }
 
-            raw = {"type": "image_raw", "data": encode_image_to_base64(frame), "width": FRAME_WIDTH, "height": FRAME_HEIGHT}
-            proc = {"type": "image_processed", "data": encode_image_to_base64(overlay), "width": FRAME_WIDTH, "height": FRAME_HEIGHT}
+            raw = {
+                    "type": "image_raw",
+                    "data": encode_image_to_base64(frame),
+                    "width": FRAME_WIDTH,
+                    "height": FRAME_HEIGHT
+                }
+
+            proc = {
+                    "type": "image_processed",
+                    "data": encode_image_to_base64(overlay),
+                    "width": FRAME_WIDTH,
+                    "height": FRAME_HEIGHT
+                }
+
             await COMM.broadcast_telemetry(telemetry, raw, proc)
+
 
             cv2.imshow("Ijul ngedebug HIBECI", overlay)
             if cv2.waitKey(1) & 0xFF == ord("q"):

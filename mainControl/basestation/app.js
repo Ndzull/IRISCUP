@@ -123,7 +123,7 @@ class BaseStation {
       };
 
       this.ws.onmessage = (event) => this.handleWebSocketMessage(event.data);
-
+      
       this.ws.onerror = (error) => this.log(`WebSocket error: ${error.message || "Connection failed"}`, "error");
       this.ws.onclose = () => {
         this.connected = false;
@@ -162,19 +162,32 @@ class BaseStation {
   handleWebSocketMessage(data) {
     try {
       const message = JSON.parse(data);
-      switch (message.type) {
-        case "image_raw":
+      switch(message.type) {
+      case "image_raw":
           this.displayImage(message.data, "raw");
           this.rawFpsCounter.tick();
-          if (message.width && message.height)
-            this.safeSetText("rawResolution", `${message.width}x${message.height}`);
+          if (message.width && message.height) {
+            document.getElementById(
+              "rawResolution"
+            ).textContent = `${message.width}x${message.height}`;
+          }
           break;
 
         case "image_processed":
           this.displayImage(message.data, "processed");
           this.processedFpsCounter.tick();
+          if (message.width && message.height) {
+            document.getElementById(
+              "processedResolution"
+            ).textContent = `${message.width}x${message.height}`;
+          }
+          break;
+
+        case "image_bev":
+          this.displayImage(message.data, "bev");
+          this.bevFpsCounter.tick();
           if (message.width && message.height)
-            this.safeSetText("processedResolution", `${message.width}x${message.height}`);
+            this.safeSetText("bevResolution", `${message.width}x${message.height}`);
           break;
 
         case "telemetry":
@@ -202,20 +215,25 @@ class BaseStation {
   }
 
   displayImage(imageData, type) {
-    const canvas = type === "raw" ? this.rawCanvas : this.processedCanvas;
-    const ctx = type === "raw" ? this.rawCtx : this.processedCtx;
-    const placeholder = document.getElementById(`${type}Placeholder`);
-    if (placeholder) placeholder.style.display = "none";
+      const canvas = type === "raw" ? this.rawCanvas : this.processedCanvas;
+      const ctx = type === "raw" ? this.rawCtx : this.processedCtx;
+      const placeholder = document.getElementById(`${type}Placeholder`);
 
-    const img = new Image();
-    img.onload = () => {
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
-    };
-    img.src = imageData.startsWith("data:image")
-      ? imageData
-      : `data:image/jpeg;base64,${imageData}`;
+      if (placeholder) {
+          placeholder.style.display = "none";
+          canvas.style.display = "block";
+      }
+
+      const img = new Image();
+      img.onload = () => {
+          // Draw image scaled to existing canvas size
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      };
+
+      img.src = imageData.startsWith("data:image")
+          ? imageData
+          : `data:image/jpeg;base64,${imageData}`;
   }
 
   updateTelemetry(data) {
