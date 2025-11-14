@@ -25,7 +25,12 @@
 -Lane Robot Position Detector(robot ada di jalur kanan atau kiri)<br></ul>
 </p>
 <h4>ESP32</h4>
-<p><ul>cuman buat ngehubungin laptop ke ESP32 niatnya pakai WIFI</ul></p>
+<p><ul>cuman buat ngehubungin laptop ke ESP32 pakai WIFI</ul></p>
+
+<h2>UPDATE: PROGRAM EXPLAIN</h2>
+<h3>main.py</h3>
+<p>Tempat dimana aku ngerun programnya. Disini ada data-data sesuatu yang harus disambungin (walaupun local). </p>
+
 
 <h2>ISI HATI IJUL</h2>
 <p>Mff mas mesoh, ini definisi menikmati proses</p>
@@ -39,3 +44,8 @@
 <p>disini aku solve sesuatu dan menambah error baru, solve sesuatu dan menambah error baru lagi</p>
 <p>aku wes dapat informasi jobdesk aKu gmn</p>
 <h3>10 November 2025</h3>
+<h3>11 November 2025</h3>
+<h3>12 November 2025</h3>
+<h3>13 November 2025</h3>
+<p>ROBOT E DRG JADI</p>
+<h3>14 November 2025</h3>
