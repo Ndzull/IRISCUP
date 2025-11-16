@@ -38,18 +38,21 @@ class VisionProcessor:
         """
         
         src = np.float32([
-            # [self.w * 0.40, self.h * 0.60],
-            # [self.w * 0.60, self.h * 0.60],
-            # [self.w * 0.10, self.h * 0.95],
-            # [self.w * 0.90, self.h * 0.95]
-            # [self.w * 0.10, self.h * 0.55],   # kiri depan
-            # [self.w * 0.85, self.h * 0.55],   # kanan depan
-            # [0  ,              self.h * 0.95],  # kiri bawah
-            # [self.w,         self.h * 0.95]   # kanan bawah
-            [ self.w * 0.40, self.h * 0.60],   # kiri atas sedikit kiri
-            [ self.w * 1.70, self.h * 0.60],   # kanan atas jauh ke kanan
-            [ self.w * 0.4, self.h * 0.95],  # kiri bawah sedikit kiri
-            [ self.w * 1.2, self.h * 0.95]
+            #pov normal (fp1)
+            # [self.w * 0.40, self.h * 0.60], # kiri atas
+            # [self.w * 0.60, self.h * 0.60], # kanan atas
+            # [self.w * 0.10, self.h * 0.95], # kiri bawah
+            # [self.w * 0.90, self.h * 0.95]  # kanan bawah
+            #pasin kalau pov ada di salah satu lajur
+            [self.w * 0.10, self.h * 0.55],  # kiri atas
+            [self.w * 0.85, self.h * 0.55],  # kanan atas
+            [0  ,           self.h * 0.95],  # kiri bawah
+            [self.w,        self.h * 0.95]   # kanan bawah
+            #pasin kalau pov ada di salah satu lajur (anggapan bisa full)
+            # [ self.w * 0.40, self.h * 0.60],   # kiri atas 
+            # [ self.w * 1.70, self.h * 0.60],   # kanan atas 
+            # [ self.w * 0.4, self.h * 0.95],  # kiri bawah
+            # [ self.w * 1.2, self.h * 0.95]    # kananbawah 
         ])
         offset = self.w * 0.2
         dst = np.float32([
@@ -116,8 +119,6 @@ class VisionProcessor:
         x0 = padding
         y0 = h - inset_h - padding
 
-        # If alpha blending desired, create border + semitransparent background
-        # background rectangle
         rect_color = (10, 10, 10)
         alpha = 0.85
         sub = out[y0:y0 + inset_h, x0:x0 + inset_w].astype(float)
@@ -125,7 +126,6 @@ class VisionProcessor:
         blended = cv2.addWeighted(src, alpha, sub, 1 - alpha, 0).astype(np.uint8)
         out[y0:y0 + inset_h, x0:x0 + inset_w] = blended
 
-        # optional border
         cv2.rectangle(out, (x0 - 1, y0 - 1), (x0 + inset_w, y0 + inset_h), (200, 200, 200), 1)
 
         return out
@@ -144,19 +144,19 @@ class VisionProcessor:
         h, w = frame_bgr.shape[:2]
         overlay = frame_bgr.copy()
 
-        # 1) HLS threshold
+        #HLS threshold
         hls = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2HLS)
         mask = cv2.inRange(hls, self.LOWER_WHITE, self.UPPER_WHITE)
 
-        # morphological to reduce noise
+        # morfologi buat reduce noise
         kernel = np.ones((3, 3), np.uint8)
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel, iterations=1)
         mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=1)
 
-        # 2) BEV
+        # BEV
         bev_mask = cv2.warpPerspective(mask, self.M, (w, h), flags=cv2.INTER_LINEAR)
 
-        # 3) edges + Hough on BEV
+        # edges + Hough di BEV
         edges = cv2.Canny(bev_mask, 40, 120)
         lines = cv2.HoughLinesP(
             edges,

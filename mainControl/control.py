@@ -2,7 +2,7 @@ from typing import Tuple, Optional, Dict, Any
 import math
 
 MAX_STEERING_ANGLE = 45.0  #sudut maks
-MAX_SPEED_CMD = 999.0      # Kecepatan maks motor dc
+MAX_SPEED_CMD = 1500.0      # Kecepatan maks motor dc
 MIN_OBSTACLE_DIST = 20.0   
 
 class PIDController:
@@ -47,9 +47,9 @@ class RobotController:
         # kurangin kecepatan tergantung sudut
         abs_s = abs(steer)
         if abs_s > 40:
-            speed = 300.0
+            speed = 950.0
         elif abs_s > 25:
-            speed = 400.0
+            speed = 1100.0
         else:
-            speed = 999.0
-        return steer, speed
+            speed = 1500.0
+        return -steer, speed

@@ -10,9 +10,9 @@ import websockets
 
 WS_SERVER_IP = "0.0.0.0"
 WS_SERVER_PORT = 8080
-URL_KAMERA = "videotest2.mp4" #http://10.7.101.58:8080/video
-UDP_LISTEN_PORT = 50001
-UDP_CONTROL_IP = "192.168.4.1" #ip esp32
+URL_KAMERA = "videotest2.mp4" #http://10.7.101.58:8080/video http://10.234.118.128:8080/video http://10.234.118.128:8080/video
+UDP_LISTEN_PORT = 50002
+UDP_CONTROL_IP = "10.234.118.48" #ip esp32
 UDP_CONTROL_PORT = 50002
 TARGET_FPS = 30
 FRAME_WIDTH = 640
