@@ -7,7 +7,7 @@ FRAME_WIDTH = 640
 FRAME_HEIGHT = 480
 MAX_STEERING_ANGLE = 45.0
 
-# Hough defaults (bisa disesuaikan)
+# Hough defaults
 HOUGH_THRESHOLD = 25
 HOUGH_MIN_LINE_LENGTH = 25
 HOUGH_MAX_LINE_GAP = 20
@@ -28,19 +28,28 @@ class VisionProcessor:
         self.M, self.M_inv = self._get_perspective_matrices()
 
         # HLS white detection range (tweak jika perlu)
-        self.LOWER_WHITE = np.array([0, 150, 0])
-        self.UPPER_WHITE = np.array([255, 255, 255])
+        self.LOWER_WHITE = np.array([0, 200, 0])
+        self.UPPER_WHITE = np.array([180, 255, 255])
 
     def _get_perspective_matrices(self) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Buat matriks perspektif (BEV) dan inverse-nya.
-        Koordinat src/dst ini asumsi — perlu tuning kalau POV berubah.
+        Buat matriks perspektif (BEV) dan inverse-nya
+        src/dst harus disesuaikan dengan pov HP saat ada di robot
         """
+        
         src = np.float32([
-            [self.w * 0.40, self.h * 0.60],
-            [self.w * 0.60, self.h * 0.60],
-            [self.w * 0.10, self.h * 0.95],
-            [self.w * 0.90, self.h * 0.95]
+            # [self.w * 0.40, self.h * 0.60],
+            # [self.w * 0.60, self.h * 0.60],
+            # [self.w * 0.10, self.h * 0.95],
+            # [self.w * 0.90, self.h * 0.95]
+            # [self.w * 0.10, self.h * 0.55],   # kiri depan
+            # [self.w * 0.85, self.h * 0.55],   # kanan depan
+            # [0  ,              self.h * 0.95],  # kiri bawah
+            # [self.w,         self.h * 0.95]   # kanan bawah
+            [ self.w * 0.40, self.h * 0.60],   # kiri atas sedikit kiri
+            [ self.w * 1.70, self.h * 0.60],   # kanan atas jauh ke kanan
+            [ self.w * 0.4, self.h * 0.95],  # kiri bawah sedikit kiri
+            [ self.w * 1.2, self.h * 0.95]
         ])
         offset = self.w * 0.2
         dst = np.float32([
@@ -82,10 +91,9 @@ class VisionProcessor:
         tol = w * 0.20
 
         if lane_center < frame_center - tol:
-            # marka ke kiri frame -> robot relatif lebih ke kanan (pov kiri => interpretasi terserah aplikasi)
-            return "right"
-        elif lane_center > frame_center + tol:
             return "left"
+        elif lane_center > frame_center + tol:
+            return "right"
         else:
             return "center"
 
@@ -201,6 +209,6 @@ class VisionProcessor:
         bev_mask_bgr = cv2.cvtColor(bev_mask, cv2.COLOR_GRAY2BGR)
 
         # 7) Optional: produce combined visualization (overlay + inset BEV)
-        combined_view = self.combine(overlay, bev_mask_bgr, inset_scale=0.28)
+        combined_view = np.concatenate((overlay, bev_mask_bgr), axis=1)
 
         return combined_view, avg_angle, lane_status, robot_position, bev_mask_bgr

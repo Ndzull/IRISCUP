@@ -2,12 +2,9 @@ from typing import Tuple, Optional, Dict, Any
 import math
 
 MAX_STEERING_ANGLE = 45.0  #sudut maks
-MAX_SPEED_CMD = 255.0       # Kecepatan maks motor dc
+MAX_SPEED_CMD = 999.0      # Kecepatan maks motor dc
 MIN_OBSTACLE_DIST = 20.0   
 
-# =================================================================
-# CLASS: PID CONTROLLER (STANDAR ROBOTIKA)
-# =================================================================
 class PIDController:
     """
     Simulasi PID Controller untuk menghaluskan perintah kemudi.
@@ -25,18 +22,13 @@ class PIDController:
         output = self.Kp * error
         return output
 
-
-# =================================================================
-# CLASS: ROBOT CONTROLLER (LOGIC KEPUTUSAN UTAMA)
-# =================================================================
-# control.py
 from typing import Tuple
 
 class RobotController:
     def __init__(self):
         pass
 
-    def decide_command(self, angle_deg: float, lane_status: str, obstacle_info: dict) -> Tuple[float, float]:
+    def decide_command(self, angle_deg  : float, lane_status: str, obstacle_info: dict) -> Tuple[float, float]:
         """
         Return (steer_angle_deg, motor_value)
         motor_value is a simple speed constant (0..255 example)
@@ -51,15 +43,13 @@ class RobotController:
             if obstacle_info.get("position") == "right":
                 return -30.0, 50.0
 
-        # basic mapping: steer = -angle (if angle positive means lane tilting right)
         steer = max(-45.0, min(45.0, -angle_deg))
-        # speed reduces when high steer
+        # kurangin kecepatan tergantung sudut
         abs_s = abs(steer)
-        if abs_s > 30:
-            speed = 150.0
-        elif abs_s > 15:
-            speed = 250.0
+        if abs_s > 40:
+            speed = 300.0
+        elif abs_s > 25:
+            speed = 400.0
         else:
-            speed = 255.0
-        # clip to firmware expected range if needed
+            speed = 999.0
         return steer, speed

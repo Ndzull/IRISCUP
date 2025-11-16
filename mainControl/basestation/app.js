@@ -58,9 +58,9 @@ class BaseStation {
 
       const statusEl = document.getElementById("statusMessage");
       if (statusEl) {
-        if (command === "start") statusEl.textContent = "Autonomous Mode ON.";
-        else if (command === "stop") statusEl.textContent = "Robot stopped by operator.";
-        else if (command === "reset_distance") statusEl.textContent = "Distance reset sent.";
+        if (command === "start") statusEl.textContent = "Sudah saatnya HIBECI jalan";
+        else if (command === "stop") statusEl.textContent = "Stop sek";
+        else if (command === "reset_distance") statusEl.textContent = "Reset dulu gak sih";
         statusEl.classList.remove("hidden");
       }
     } else {
@@ -99,6 +99,7 @@ class BaseStation {
     if (startBtn) startBtn.addEventListener("click", () => this.sendCommand("start"));
     if (stopBtn) stopBtn.addEventListener("click", () => this.sendCommand("stop"));
     if (resetBtn) resetBtn.addEventListener("click", () => this.sendCommand("reset_distance"));
+    
   }
 
   /**

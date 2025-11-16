@@ -13,6 +13,7 @@ class SensorUDPProtocol(asyncio.DatagramProtocol):
     def datagram_received(self, data, addr):
         try:
             txt = data.decode("utf-8").strip()
+            print(f"[UDP IN] Dari {addr}: {txt}") 
             # Format kecepatan
             if txt.startswith("S:"):
                 self.manager.REAL_TIME_SPEED = float(txt.split(":")[1])
@@ -75,7 +76,8 @@ class CommunicationManager:
 
     def send_control_command(self, steer: float, motor: float):
         """Kirim perintah A dan M ke ESP32."""
-        cmd = f"A:{round(steer,2)},M:{round(motor,2)}\n"
+        #cmd = f"A:{round(steer,2)},M:{round(motor,2)}\n"
+        cmd = f"{round(steer,2)},{round(motor,2)}\n"
         try:
             self.udp_cmd_sock.sendto(cmd.encode(), (self.UDP_CONTROL_IP, self.UDP_CONTROL_PORT))
             print(f"[UDP OUT] {cmd.strip()}")
@@ -106,7 +108,7 @@ class CommunicationManager:
             print(f"[WS ERROR] {e}")
 
     async def ws_handler(self, ws, path=None):
-        """Handler koneksi WebSocket baru."""
+        """Handler koneksi WebSocket"""
         print(f"[WS] Client connected: {ws.remote_address}")
         self.CLIENTS.add(ws)
         recv_task = asyncio.create_task(self.ws_receiver_loop(ws))

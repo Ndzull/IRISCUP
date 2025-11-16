@@ -10,9 +10,9 @@ import websockets
 
 WS_SERVER_IP = "0.0.0.0"
 WS_SERVER_PORT = 8080
-URL_KAMERA = "videotest.mp4" #http://10.7.101.58:8080/video
+URL_KAMERA = "videotest2.mp4" #http://10.7.101.58:8080/video
 UDP_LISTEN_PORT = 50001
-UDP_CONTROL_IP = "10.234.118.52" #ip esp32
+UDP_CONTROL_IP = "192.168.4.1" #ip esp32
 UDP_CONTROL_PORT = 50002
 TARGET_FPS = 30
 FRAME_WIDTH = 640
@@ -34,7 +34,7 @@ CAP.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
 
 
 def encode_image_to_base64(image):
-    """Konversi frame OpenCV (BGR) ke string base64 aman."""
+    """Konversi frame OpenCV (BGR) ke string base64"""
     if image is None:
         print("[ERROR] encode_image_to_base64: image kosong!")
         return ""
@@ -50,6 +50,7 @@ def encode_image_to_base64(image):
 
 
 async def lane_detection_handler(ws):
+    '''Connect dan ngirim data ke websocket secara realtime'''
     global COMM, VISION, CONTROL
 
     COMM.REAL_TIME_DISTANCE = 0.0
@@ -133,6 +134,7 @@ async def lane_detection_handler(ws):
 
 
 async def main_orchestrator():
+    '''ngirim data dan ngejalanin subprogram'''
     global COMM, VISION, CONTROL
     COMM = CommunicationManager(WS_SERVER_PORT, UDP_LISTEN_PORT, UDP_CONTROL_IP, UDP_CONTROL_PORT)
     VISION = VisionProcessor(FRAME_WIDTH, FRAME_HEIGHT)

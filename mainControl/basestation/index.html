@@ -97,12 +97,12 @@
         }
 
         .btn-danger {
-            background-color: hsl(0 62.8% 30.6%);
+            background-color: hsl(207, 35%, 58%);
             color: hsl(0 0% 98%);
         }
 
         .btn-danger:hover {
-            background-color: hsl(0 62.8% 35%);
+            background-color: hsl(207, 35%, 58%);
         }
 
         .input {
@@ -131,8 +131,8 @@
         }
 
         .badge-success {
-            background-color: hsl(142 76% 36% / 0.2);
-            color: hsl(142 76% 56%);
+            background-color: hsla(203, 43%, 45%, 0.346);
+            color: hsl(205, 100%, 85%);
         }
 
         .badge-error {
@@ -216,19 +216,19 @@
         }
 
         .log-info {
-            color: hsl(199 89% 48%);
+            color: hsl(207, 35%, 58%);
         }
 
         .log-success {
-            color: hsl(142 76% 56%);
+            color: hsl(142, 54%, 68%);
         }
 
         .log-error {
-            color: hsl(0 62.8% 50.6%);
+            color: hsl(0, 100%, 71%);
         }
 
         .log-warning {
-            color: hsl(38 92% 60%);
+            color: hsl(38, 100%, 76%);
         }
 
         /* Scrollbar styling */
@@ -264,7 +264,7 @@
         }
 
         .gauge-value {
-            stroke: hsl(142 76% 56%);
+            stroke: hsl(205, 100%, 85%);
             fill: none;
             stroke-width: 8;
             stroke-linecap: round;
@@ -277,6 +277,43 @@
             transition: transform 0.3s ease;
             transform-origin: 100px 100px;
         }
+
+        /* Styling Slider (Threshold Inputs) */
+        input[type="range"] {
+            /* Dasar styling untuk track */
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px; /* Tinggi track */
+            background: hsl(240 3.7% 15.9%); /* Warna track sekunder (background card/border) */
+            border-radius: 4px;
+            margin-top: 8px; /* Sedikit jarak dari label */
+        }
+
+        /* Chrome/Safari/Blink (Thumb) */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px; /* Ukuran thumb */
+            height: 16px;
+            border-radius: 50%; /* Bulat */
+            /* Warna: Menggunakan warna aksen terang (seperti hijau/cyan di tema dark) */
+            background: hsl(207, 35%, 58%); 
+            cursor: pointer;
+            border: 3px solid hsl(240 10% 3.9%); /* Border agar terlihat menonjol dari background */
+            box-shadow: 0 0 2px hsl(207, 35%, 58%);
+        }
+
+        /* Firefox (Thumb) */
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: hsl(207, 35%, 58%);
+            cursor: pointer;
+            border: none;
+        }
+
+        /* Opsional: Memberikan indikasi warna pada track sebelum thumb (tidak selalu didukung) */
+        /* Biasanya memerlukan JS untuk mengisi track-color */
     </style>
 </head>
 
@@ -286,7 +323,7 @@
         <div class="container mx-auto px-6 py-4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <img src="logo.svg" alt="IRIS Logo" class="h-8">
+                    <img src="logo.png" alt="IRIS Logo" class="h-8">
                     <div>
                         <h1 class="text-xl font-bold">IRIS Base Station</h1>
                         <p class="text-xs text-[hsl(240,5%,64.9%)]">HIBECI Monitor</p>
@@ -389,6 +426,57 @@
                 </div>
             </div>
         </div>
+        
+        <!--Threshold Panel
+        <div class="card mt-6">
+            <h3 class="text-md font-semibold mb-3">Threshold Settings</h3>
+
+            <div class="grid grid-cols-2 gap-4">
+
+                 H Min
+                <div>
+                    <label class="text-sm font-medium">Hue Min</label>
+                    <input id="hMin" type="range" min="0" max="255" value="0" class="w-full">
+                    <span id="hMinVal" class="text-xs text-gray-400">0</span>
+                </div>
+
+                H Max
+                <div>
+                    <label class="text-sm font-medium">Hue Max</label>
+                    <input id="hMax" type="range" min="0" max="255" value="255" class="w-full">
+                    <span id="hMaxVal" class="text-xs text-gray-400">255</span>
+                </div>
+
+                L Min
+                <div>
+                    <label class="text-sm font-medium">Lightness Min</label>
+                    <input id="lMin" type="range" min="0" max="255" value="150" class="w-full">
+                    <span id="lMinVal" class="text-xs text-gray-400">150</span>
+                </div>
+
+                 L Max 
+                <div>
+                    <label class="text-sm font-medium">Lightness Max</label>
+                    <input id="lMax" type="range" min="0" max="255" value="255" class="w-full">
+                    <span id="lMaxVal" class="text-xs text-gray-400">255</span>
+                </div>
+
+                S Min
+                <div>
+                    <label class="text-sm font-medium">Saturation Min</label>
+                    <input id="sMin" type="range" min="0" max="255" value="0" class="w-full">
+                    <span id="sMinVal" class="text-xs text-gray-400">0</span>
+                </div>
+
+                S Max
+                <div>
+                    <label class="text-sm font-medium">Saturation Max</label>
+                    <input id="sMax" type="range" min="0" max="255" value="255" class="w-full">
+                    <span id="sMaxVal" class="text-xs text-gray-400">255</span>
+                </div>
+
+            </div>
+        </div> -->
 
         <!-- Telemetry Data -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
