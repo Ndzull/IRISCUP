@@ -86,6 +86,53 @@
   <li>Menjalankan aktuator (motor DC + steering servo).</li>
 </ul>
 
+<h2>PROGRAM EXPLAIN: CONFIGURATION CONTROL</h2>
+<!-- <img src="konfigurasikontrol.png"></img> -->
+<h3>Input Kendali</h3>
+<ul>
+  <li><b>Lane Angle</b> -> dihitung dari hasil BEV + Hough transform</li>
+  <li><b>Lane Status</b> -> Detected / Lost</li>
+  <li><b>Robot Position</b> -> left / center / right</li>
+  <li><b>Obstacle Distance</b> -> dikirim dari ESP32 via UDP</li>
+</ul>
+
+<h3>Decision Making (RobotController)</h3>
+<p>Robot menggunakan finite-state logic:</p>
+<ul>
+  <li><b>normal</b> — mengikuti marka jalan (PID steering)</li>
+  <li><b>avoid</b> — obstacle dekat → belok kanan</li>
+  <li><b>return_left</b> — setelah obstacle hilang → kembali ke jalur</li>
+</ul>
+
+<h3>Output Kendali</h3>
+<ul>
+  <li><b>Steering Angle</b> (−45° sampai +45°)</li>
+  <li><b>Speed PWM</b>, ditentukan dari kurva:
+    <ul>
+      <li>Sisi belok besar → PWM rendah</li>
+      <li>Jalan lurus → PWM tinggi</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>Pengiriman ke ESP32</h3>
+<ul>
+  <li>Media: <b>WiFi</b></li>
+  <li>Protocol: <b>UDP</b></li>
+  <li>Data Format: <code>steer,speed\n</code></li>
+</ul>
+
+<h3>Peran ESP32</h3>
+<ul>
+  <li>Menerapkan PWM ke motor DC</li>
+  <li>Menggerakkan servo steering</li>
+  <li>Mengirim data <b>distance (cm)</b> kembali ke Laptop</li>
+</ul>
+
+<h3>Telemetry</h3>
+<p>
+Semua data kendali (angle, speed, status, obstacle) dikirim ke Base Station melalui WebSocket (TCP).
+</p>
 
 <h2>ISI HATI IJUL</h2>
 <p>Mff mas mesoh, ini definisi menikmati proses</p>
