@@ -64,9 +64,9 @@ class RobotController:
     def speed_curve(self, steer):
         s = abs(steer)
         if s > 40:
-            return 950
+            return 700
         elif s > 25:
-            return 1100
+            return 900
         else:
             return 1200  
         
@@ -76,25 +76,23 @@ class RobotController:
         dist = obstacle_info.get("distance_cm")
         detected = obstacle_info.get("detected", False)
 
-        # -----------------------------------------------------------
-        # OBSTACLE AVOIDANCE
-        # -----------------------------------------------------------
+        #detect obs di lajur kiri
         if detected and dist is not None and dist < 40:
             self.state = "avoid"
             self.last_safe_time = time.time()
-            return 45.0, 950.0        # BEL0K KANAN
+            return 45.0, 700.0        # belok kanan
 
         if self.state == "avoid":
             if (not detected) or (dist is not None and dist > 60):
                 self.state = "return_left"
-                return -45.0, 950.0   # BALIK KIRI
+                return -45.0, 700.0   # balik kiri
             else:
-                return 40.0, 950.0    # TETAP BELOK KANAN
+                return 40.0, 800.0    # tetep belok kanan
 
         if self.state == "return_left":
-            if abs(angle_deg) < 5:
+            if abs(angle_deg) < 15:
                 self.state = "normal"
-            return -20.0, 60.0        # NUDGE KIRI PELAN
+            return -30.0, 800.0        # balik ke kiri pelan
 
         #jalan normal
         #smoothing

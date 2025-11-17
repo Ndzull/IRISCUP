@@ -88,7 +88,7 @@ class CommunicationManager:
         try:
             self.udp_cmd_sock.sendto(cmd.encode(), (self.UDP_CONTROL_IP, self.UDP_CONTROL_PORT))
             print(f"[UDP OUT] {cmd.strip()}")
-            #await asyncio.sleep(0.5) #yaopo njir ngaruh ke FPS setelah di start
+            # await asyncio.sleep(0.5) #yaopo njir ngaruh ke FPS setelah di start
         except Exception as e:
             print(f"[UDP ERROR] {e}")
 

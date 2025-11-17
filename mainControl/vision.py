@@ -14,9 +14,9 @@ HOUGH_MAX_LINE_GAP = 20
 
 class VisionProcessor:
     """
-    Vision pipeline (HLS -> BEV -> Hough -> overlay)
+    (HLS -> BEV -> Hough -> overlay)
     - process_frame_for_lane_data(frame) -> (overlay, avg_angle, lane_status, robot_position, bev_mask_bgr)
-    - combine(overlay, bev_bgr) -> overlay with BEV inset
+    - combine(overlay, bev_bgr) jadiin satu frame
     """
 
     def __init__(self, width: int = FRAME_WIDTH, height: int = FRAME_HEIGHT):
@@ -76,8 +76,8 @@ class VisionProcessor:
 
     def estimate_robot_lane_position(self, mask_frame: np.ndarray) -> str:
         """
-        Tentukan posisi robot relatif terhadap marka di bottom area BEV mask.
-        Mengembalikan "left", "right", "center", atau "unknown".
+        Nentuin posisi robot relatif terhadap marka di bottom area BEV mask
+        ngembaliin info "left", "right", "center", atau "unknown".
         """
         h, w = mask_frame.shape[:2]
         bottom = mask_frame[int(h * 0.7):, :]
@@ -101,7 +101,7 @@ class VisionProcessor:
 
     def combine(self, overlay: np.ndarray, bev_bgr: np.ndarray, inset_scale: float = 0.30, padding: int = 8) -> np.ndarray:
         """
-        Gabungkan overlay (full frame) dengan BEV sebagai inset (pojak kiri bawah secara default).
+        Gabungkan overlay (full frame) dengan BEV sebagai inset 
         - inset_scale: ukuran BEV relatif terhadap lebar overlay (0..1)
         - padding: jarak dari tepi
         """
@@ -131,7 +131,7 @@ class VisionProcessor:
 
     def process_frame_for_lane_data(self, frame_bgr):
         """
-        Pipeline utama:
+        Utamanya gini:
          - threshold HLS untuk marka putih
          - morphological cleanup
          - warpPerspective -> BEV mask
@@ -178,11 +178,9 @@ class VisionProcessor:
             for ln in lines:
                 x1, y1, x2, y2 = ln.reshape(4)
                 dx = (x2 - x1)
-                # avoid divide-by-zero, compute slope safely
                 slope = (y2 - y1) / (dx + 1e-6)
                 angle = self._calculate_angle_from_line(x1, y1, x2, y2)
 
-                # heuristik: slope sign determines left/right in BEV coords (tweak thresholds if needed)
                 if slope > 0.3:
                     left_angles.append(angle)
                     cv2.line(bev_lines, (x1, y1), (x2, y2), (0, 255, 0), 3)
@@ -190,24 +188,20 @@ class VisionProcessor:
                     right_angles.append(angle)
                     cv2.line(bev_lines, (x1, y1), (x2, y2), (0, 255, 0), 3)
                 else:
-                    # nearly vertical / small slope -> still draw
                     cv2.line(bev_lines, (x1, y1), (x2, y2), (0, 200, 0), 2)
 
             all_angles = left_angles + right_angles
             if len(all_angles) > 0:
                 avg_angle = float(np.mean(all_angles))
 
-        # 4) unwarp bev_lines onto original overlay
         unwarped = cv2.warpPerspective(bev_lines, self.M_inv, (w, h), flags=cv2.INTER_LINEAR)
         overlay = cv2.addWeighted(overlay, 1.0, unwarped, 1.0, 0)
 
-        # 5) position estimate (gunakan BEV mask)
+        # position estimate (BEV mask)
         robot_position = self.estimate_robot_lane_position(bev_mask)
 
-        # 6) convert bev_mask to BGR for UI and return
+        # konversi bev_mask to BGR for UI and return
         bev_mask_bgr = cv2.cvtColor(bev_mask, cv2.COLOR_GRAY2BGR)
-
-        # 7) Optional: produce combined visualization (overlay + inset BEV)
         combined_view = np.concatenate((overlay, bev_mask_bgr), axis=1)
 
         return combined_view, avg_angle, lane_status, robot_position, bev_mask_bgr
