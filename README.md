@@ -28,6 +28,181 @@
 <p><ul>cuman buat ngehubungin laptop ke ESP32 pakai WIFI</ul></p>
 
 <h2>PROGRAM EXPLAIN: ALL FLOW</h2>
+<pre>
+Operator (Base Station)
+        │  WebSocket
+        ▼
+  main.py  ─────────────► vision.py
+    │                          │
+    │                          ▼
+    │                    Hasil vision
+    │                          │
+    ├──────────────► control.py
+    │                    │
+    │                    ▼
+    │               Steering + Speed
+    │
+    │ UDP
+    ▼
+ communication.py ─────────► ESP32 (robot)
+        ▲                         │
+        │   Data sensor (UDP)     │
+        └─────────────────────────┘
+
+Data sensor → main.py → Base Station (update realtime)
+</pre>
+
+<h4>Partisi file</h4>
+<pre>
+mainControl/
+├── basestation/
+│   ├── app.js
+│   ├── index.html
+│   ├── logo.png
+│   └── styles.css
+├── communication.py
+├── control.py
+├── main.py
+├── requirements.txt
+└── vision.py
+</pre>
+
+<h3>Base Station (Web UI)</h3>
+
+<p>
+Folder: <code>basestation/</code><br>
+Berisi <code>index.html</code>, <code>app.js</code>, dan <code>styles.css</code>.  
+UI ini digunakan operator untuk mengontrol robot.
+</p>
+
+<ul>
+  <li>Mengirim perintah: <em>start</em>, <em>stop</em>, <em>manual/auto</em>, <em>target speed</em>.</li>
+  <li>Menerima telemetri dari robot: sudut, speed, status lane, obstacle info.</li>
+  <li>Berkomunikasi dengan <code>main.py</code> menggunakan WebSocket.</li>
+</ul>
+
+<hr>
+
+<h3>main.py (Program Utama)</h3>
+
+<p>
+File inti yang menjalankan seluruh logika sistem.  
+Tugas utamanya:
+</p>
+
+<ul>
+  <li>Menerima input perintah dari Base Station.</li>
+  <li>Mengambil video stream dari kamera HP / IP Webcam.</li>
+  <li>Memanggil modul <code>vision.py</code> untuk analisis gambar.</li>
+  <li>Memanggil <code>control.py</code> untuk perhitungan kendali.</li>
+  <li>Mengirimkan hasil kendali ke <code>communication.py</code> supaya diteruskan ke ESP32.</li>
+  <li>Meneruskan data sensor dari ESP32 kembali ke Base Station.</li>
+</ul>
+
+<p>
+<code>main.py</code> adalah pusat alur: menerima data, memproses, mengirim balikan ke UI.
+</p>
+
+<hr>
+
+<h3>vision.py (Pemrosesan Kamera)</h3>
+
+<p>
+Modul ini bertanggung jawab untuk seluruh proses komputer visi:
+</p>
+
+<ul>
+  <li>Mengambil frame dari IP Webcam (HTTP/TCP).</li>
+  <li>Mendeteksi garis (lane detection).</li>
+  <li>Memberikan nilai <code>angle_deg</code> untuk dikirim ke kontrol.</li>
+  <li>Mendeteksi obstacle menggunakan metode visual (jika ada).</li>
+</ul>
+
+<p>
+Output utama ke <code>main.py</code>:
+</p>
+
+<pre>
+{
+  "angle": ...,
+  "lane_status": ...,
+  "debug_frame": ...,
+  "obstacle_info": { ... }
+}
+</pre>
+
+<hr>
+
+<h3>control.py (Kendali Robot)</h3>
+
+<p>
+Modul ini mengatur logika pengendalian gerak robot berdasarkan hasil vision:
+</p>
+
+<ul>
+  <li>Penerapan PID untuk smoothing dan feedback sudut.</li>
+  <li>Penentuan kecepatan berdasarkan besarnya steering.</li>
+  <li>Mode normal → hindar obstacle → kembali ke jalur.</li>
+</ul>
+
+<p>
+Output ke <code>main.py</code>:
+</p>
+
+<pre>
+{
+  "steer": ...,
+  "speed": ...
+}
+</pre>
+
+<p>
+File ini memastikan robot bergerak stabil dan aman.
+</p>
+
+<hr>
+
+<h3>communication.py (Pengiriman & Penerimaan Data)</h3>
+
+<p>
+Modul yang menangani komunikasi jaringan:
+</p>
+
+<ul>
+  <li><strong>WebSocket (TCP)</strong> untuk komunikasi dengan Base Station.</li>
+  <li><strong>UDP</strong> untuk mengirim perintah motor ke ESP32.</li>
+  <li>Menerima balikan sensor obstacle dari ESP32.</li>
+</ul>
+
+<p>
+Data dari control.py dikirim ke ESP32 dalam format:
+</p>
+
+<pre>
+"angle=<value>;speed=<value>"
+</pre>
+
+<p>
+Balikan dari ESP32:
+</p>
+
+<pre>
+"obs_distance=<value>"
+</pre>
+
+<hr>
+
+<h3>ESP32 (Robot)</h3>
+
+<ul>
+  <li>Menerima perintah <code>angle</code> dan <code>speed</code> via UDP</li>
+  <li>Mengatur motor DC melalui PWM</li>
+  <li>Mengirim data jarak obstacle ke laptop</li>
+</ul>
+
+<p>
+ESP32 (ujung output) kirim data untuk menjalankan robot
+</p>
 
 <h2>PROGRAM EXPLAIN: COMMUNICATION</h2>
 <img src="komunikasi.png"></img>
