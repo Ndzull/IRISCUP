@@ -4,9 +4,8 @@ import socket
 import json
 from typing import Any, Dict, Set
 
-
 class SensorUDPProtocol(asyncio.DatagramProtocol):
-    """Menerima data sensor dari ESP32 via UDP."""
+    """Menerima data sensor dari ESP32 (UDP)"""
     def __init__(self, manager):
         self.manager = manager
 
@@ -14,38 +13,46 @@ class SensorUDPProtocol(asyncio.DatagramProtocol):
         try:
             txt = data.decode("utf-8").strip()
             print(f"[UDP IN] Dari {addr}: {txt}") 
-            # Format kecepatan
-            if txt.startswith("S:"):
-                self.manager.REAL_TIME_SPEED = float(txt.split(":")[1])
-            # Format obstacle
-            elif txt.startswith("OBS:"):
-                parts = txt.split(":")
-                if len(parts) >= 3:
-                    side = parts[1].strip().upper()
-                    dist = float(parts[2].strip())
-                    self.manager.CURRENT_OBSTACLE_INFO = {
-                        "detected": True,
-                        "position": "left" if side == "L" else "right",
-                        "distance_cm": dist
-                    }
-            # Format JSON (opsional)
-            else:
-                j = json.loads(txt)
-                if isinstance(j, dict):
-                    if "speed" in j:
-                        self.manager.REAL_TIME_SPEED = float(j["speed"])
-                    if "distance_obstacle" in j:
-                        self.manager.CURRENT_OBSTACLE_INFO["distance_cm"] = float(j["distance_obstacle"])
-                    if "obstacle_detected" in j:
-                        self.manager.CURRENT_OBSTACLE_INFO["detected"] = bool(j["obstacle_detected"])
-                    if "obstacle_position" in j:
-                        self.manager.CURRENT_OBSTACLE_INFO["position"] = j["obstacle_position"]
+            dist = float(txt)
+
+            # Update obstacle info
+            self.manager.CURRENT_OBSTACLE_INFO = {
+                "detected": dist < 50,    # di      anggap detected jika <50 cm
+                "distance_cm": dist,
+                "position": None          # nanti diinfo di main.py
+            }
+            # # format kecepatan
+            # if txt.startswith("S:"):
+            #     self.manager.REAL_TIME_SPEED = float(txt.split(":")[1])
+            # # Format obstacle
+            # elif txt.startswith("OBS:"):
+            #     parts = txt.split(":")
+            #     if len(parts) >= 3:
+            #         side = parts[1].strip().upper()
+            #         dist = float(parts[2].strip())
+            #         self.manager.CURRENT_OBSTACLE_INFO = {
+            #             "detected": True,
+            #             "position": "left" if side == "L" else "right",
+            #             "distance_cm": dist
+            #         }
+            # # format JSON (opsional)
+            # else:
+            #     j = json.loads(txt)
+            #     if isinstance(j, dict):
+            #         if "speed" in j:
+            #             self.manager.REAL_TIME_SPEED = float(j["speed"])
+            #         if "distance_obstacle" in j:
+            #             self.manager.CURRENT_OBSTACLE_INFO["distance_cm"] = float(j["distance_obstacle"])
+            #         if "obstacle_detected" in j:
+            #             self.manager.CURRENT_OBSTACLE_INFO["detected"] = bool(j["obstacle_detected"])
+            #         if "obstacle_position" in j:
+            #             self.manager.CURRENT_OBSTACLE_INFO["position"] = j["obstacle_position"]
         except Exception as e:
             print(f"[UDP ERROR] {e}")
 
 
 class CommunicationManager:
-    """Menangani komunikasi UDP (ESP32) dan WebSocket (Base Station)."""
+    """komunikasi UDP (ESP32) dan WebSocket (Base Station)"""
 
     def __init__(self, ws_port: int, udp_sensor_port: int, udp_control_ip: str, udp_control_port: int):
         self.WS_PORT = ws_port
@@ -75,18 +82,19 @@ class CommunicationManager:
         return transport
 
     def send_control_command(self, steer: float, motor: float):
-        """Kirim perintah A dan M ke ESP32."""
+        """Kirim info sudut dan kecepatan motor dc ke ESP32"""
         #cmd = f"A:{round(steer,2)},M:{round(motor,2)}\n"
         cmd = f"{round(steer,2)},{round(motor,2)}\n"
         try:
             self.udp_cmd_sock.sendto(cmd.encode(), (self.UDP_CONTROL_IP, self.UDP_CONTROL_PORT))
             print(f"[UDP OUT] {cmd.strip()}")
+            #await asyncio.sleep(0.5) #yaopo njir ngaruh ke FPS setelah di start
         except Exception as e:
             print(f"[UDP ERROR] {e}")
 
-    # websocket
+    #websocket
     async def ws_receiver_loop(self, ws):
-        """START/STOP/RESET dari Base Station."""
+        """START/STOP/RESET dari Base Station"""
         try:
             async for msg in ws:
                 j = json.loads(msg)
@@ -108,7 +116,7 @@ class CommunicationManager:
             print(f"[WS ERROR] {e}")
 
     async def ws_handler(self, ws, path=None):
-        """Handler koneksi WebSocket"""
+        """Handler koneksi Websocket"""
         print(f"[WS] Client connected: {ws.remote_address}")
         self.CLIENTS.add(ws)
         recv_task = asyncio.create_task(self.ws_receiver_loop(ws))
@@ -120,13 +128,13 @@ class CommunicationManager:
             print(f"[WS] Client disconnected: {ws.remote_address}")
 
     async def broadcast_telemetry(self, *payloads):
-        """Kirim data telemetry ke semua klien WebSocket (hanya payload dict yang valid)."""
+        """Kirim data telemetry ke Websocket (cuman payload dict yang valdi)"""
         if not self.CLIENTS:
             return
         for payload in payloads:
             try:
                 if not isinstance(payload, dict):
-                    print("[WARN] broadcast_telemetry: payload bukan dict, dilewati.")
+                    print("[WARN] broadcast_telemetry: payload bukan dict, skip")
                     continue
                 msg = json.dumps(payload)
                 await asyncio.gather(*(client.send(msg) for client in self.CLIENTS))
@@ -134,7 +142,7 @@ class CommunicationManager:
                 print(f"[WS SEND ERROR] {e}")
 
     async def start_websocket_server(self):
-        """Menyalakan WebSocket server."""
+        """nyalain server"""
         server = await websockets.serve(self.ws_handler, "0.0.0.0", self.WS_PORT)
         print(f"[WS] WebSocket server aktif di ws://0.0.0.0:{self.WS_PORT}")
         return server

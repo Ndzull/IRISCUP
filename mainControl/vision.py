@@ -12,7 +12,6 @@ HOUGH_THRESHOLD = 25
 HOUGH_MIN_LINE_LENGTH = 25
 HOUGH_MAX_LINE_GAP = 20
 
-
 class VisionProcessor:
     """
     Vision pipeline (HLS -> BEV -> Hough -> overlay)
@@ -212,3 +211,5 @@ class VisionProcessor:
         combined_view = np.concatenate((overlay, bev_mask_bgr), axis=1)
 
         return combined_view, avg_angle, lane_status, robot_position, bev_mask_bgr
+
+

@@ -2,7 +2,7 @@
 
 <p>bismillah aja dulu</p>
 
-<h2>FLOW PROGRAM</h2>
+<h2>FLOW PROGRAM (kasar)</h2>
 <p>HP(IP WEBCAM) --(WIFI/TCP)--> Laptop(main control program) --(WIFI/TCP)--> ESP32 --(selanjutnya urusan electrical)</p>
 <h3>Detail</h3>
 <h4>HP(IP WEBCAM)</h4>
@@ -27,9 +27,64 @@
 <h4>ESP32</h4>
 <p><ul>cuman buat ngehubungin laptop ke ESP32 pakai WIFI</ul></p>
 
-<h2>UPDATE: PROGRAM EXPLAIN</h2>
-<h3>main.py</h3>
-<p>Tempat dimana aku ngerun programnya. Disini ada data-data sesuatu yang harus disambungin (walaupun local). </p>
+<h2>PROGRAM EXPLAIN: ALL FLOW</h2>
+
+<h2>PROGRAM EXPLAIN: COMMUNICATION</h2>
+<img src="komunikasi.png"></img>
+<h3>1. HP / Kamera (IP Webcam) → Laptop</h3>
+<ul>
+  <li>Media: <b>WiFi</b></li>
+  <li>Protocol: <b>HTTP Stream / MJPEG</b></li>
+  <li>Transport: <b>TCP</b></li>
+  <li>Data yang dikirim: <b>Video stream (frame)</b> untuk proses vision.</li>
+</ul>
+
+<h3>💻 2. Laptop (main.py)</h3>
+<p>Menjadi pusat pemrosesan seluruh data dan komando.</p>
+
+<h4>Laptop → ESP32</h4>
+<ul>
+  <li>Media: <b>WiFi</b></li>
+  <li>Protocol: <b>UDP</b></li>
+  <li>Transport: <b>UDP</b></li>
+  <li>Data dikirim:
+    <ul>
+      <li>Steering angle</li>
+      <li>Motor speed (PWM)</li>
+    </ul>
+  </li>
+</ul>
+
+<h4>ESP32 → Laptop</h4>
+<ul>
+  <li>Protocol: <b>UDP</b></li>
+  <li>Transport: <b>UDP</b></li>
+  <li>Data dikirim: <b>Obstacle distance</b></li>
+</ul>
+
+<h4>Laptop ↔ Base Station / Control Panel</h4>
+<ul>
+  <li>Media: <b>WiFi</b></li>
+  <li>Protocol: <b>WebSocket</b></li>
+  <li>Transport: <b>TCP</b></li>
+  <li>Data yang dikirim ke Base Station:
+    <ul>
+      <li>Angle</li>
+      <li>Speed</li>
+      <li>Lane status</li>
+      <li>Robot position</li>
+      <li>Obstacle info</li>
+      <li>Status perintah robot</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>ESP32</h3>
+<ul>
+  <li>Menerima perintah <b>angle + PWM speed</b> dari Laptop.</li>
+  <li>Mengirim balik <b>jarak obstacle</b>.</li>
+  <li>Menjalankan aktuator (motor DC + steering servo).</li>
+</ul>
 
 
 <h2>ISI HATI IJUL</h2>
@@ -44,8 +99,19 @@
 <p>disini aku solve sesuatu dan menambah error baru, solve sesuatu dan menambah error baru lagi</p>
 <p>aku wes dapat informasi jobdesk aKu gmn</p>
 <h3>10 November 2025</h3>
+<p>Mulai fix bs</p>
 <h3>11 November 2025</h3>
+<p>Masih ada kendala buat ngonekin bs</p>
 <h3>12 November 2025</h3>
+<p>wah bisa jir, tp ini data framenya bermasalah</p>
 <h3>13 November 2025</h3>
+<p>alhamdulillah programku progress lah</p>
 <p>ROBOT E DRG JADI</p>
 <h3>14 November 2025</h3>
+<p>okelah dl ditambah 2 hari, semoga fisik robotku selesai</p>
+<h3>15 November 2025</h3>
+<p>blm jadi</p>
+<h3>16 November 2025</h3>
+<p>blm jadi robotnya</p>
+<h3>17 November 2025</h3>
+<p>0 testing, hehe</p>

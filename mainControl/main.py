@@ -6,6 +6,7 @@ from typing import Optional
 from communication import CommunicationManager
 from vision import VisionProcessor
 from control import RobotController
+from control import PID
 import websockets
 
 WS_SERVER_IP = "0.0.0.0"
@@ -83,6 +84,19 @@ async def lane_detection_handler(ws):
             COMM.REAL_TIME_DISTANCE += (COMM.REAL_TIME_SPEED / 100.0) * dt
             COMM.LAST_TIME = now
 
+            dist = COMM.CURRENT_OBSTACLE_INFO["distance_cm"]
+
+            if dist is not None and dist < 50:
+                final_obstacle_detected = True
+                final_obstacle_distance = dist
+                final_obstacle_position = robot_position  # samakan posisi obstacle dgn posisi robot (vision)
+            else:
+                final_obstacle_detected = False
+                final_obstacle_distance = dist
+                final_obstacle_position = None
+                
+            speed_actual = CONTROL.pwm_to_speed(target_speed)
+            COMM.REAL_TIME_SPEED = speed_actual
             #data ke bs
             telemetry = {
                 "type": "telemetry",
@@ -90,11 +104,11 @@ async def lane_detection_handler(ws):
                     "steering_angle": round(target_steer, 2), #vision BEV
                     "laneStatus": lane_status, #vision
                     "robotPosition": robot_position, #vision 
-                    "speed": round(COMM.REAL_TIME_SPEED, 2), #data dari STM32
+                    "speed": round(COMM.REAL_TIME_SPEED, 2), #estimasi perhitungan dari kecepatan PWM motor DC
                     "jarakTempuh": round(COMM.REAL_TIME_DISTANCE, 3), #ngga ditampilin di bs sih sih
-                    "obstacleDetected": COMM.CURRENT_OBSTACLE_INFO["detected"], #data dari STM32
-                    "obstacleDistance": COMM.CURRENT_OBSTACLE_INFO["distance_cm"], #data dari STM32
-                    "obstaclePosition": COMM.CURRENT_OBSTACLE_INFO["position"], #data dari STM32
+                    "obstacleDetected": final_obstacle_detected, #kalau ada obs distance dari STM32 = detected
+                    "obstacleDistance": final_obstacle_distance, #dari STM32
+                    "obstaclePosition": final_obstacle_position, #proses jika detected = samakan dengan robot Position
                 },
             }
 
@@ -113,7 +127,6 @@ async def lane_detection_handler(ws):
                 }
 
             await COMM.broadcast_telemetry(telemetry, raw, proc)
-
 
             cv2.imshow("Ijul ngedebug HIBECI", overlay)
             if cv2.waitKey(1) & 0xFF == ord("q"):
@@ -138,7 +151,8 @@ async def main_orchestrator():
     global COMM, VISION, CONTROL
     COMM = CommunicationManager(WS_SERVER_PORT, UDP_LISTEN_PORT, UDP_CONTROL_IP, UDP_CONTROL_PORT)
     VISION = VisionProcessor(FRAME_WIDTH, FRAME_HEIGHT)
-    CONTROL = RobotController()
+    pid = PID(Kp=0.5, Ki=0.0, Kd=0.25)
+    CONTROL = RobotController(pid)
     COMM.LAST_TIME = time.time()
 
     await COMM.start_udp_listener()

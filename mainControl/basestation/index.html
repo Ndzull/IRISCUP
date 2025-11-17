@@ -137,12 +137,12 @@
 
         .badge-error {
             background-color: hsl(0 62.8% 30.6% / 0.2);
-            color: hsl(0 62.8% 50.6%);
+            color: hsl(0, 100%, 71%);
         }
 
         .badge-warning {
-            background-color: hsl(38 92% 50% / 0.2);
-            color: hsl(38 92% 60%);
+            background-color: hsla(38, 98%, 46%, 0.2);
+            color: hsl(38, 100%, 76%);
         }
 
         .video-container {
@@ -194,7 +194,7 @@
         }
 
         .status-disconnected {
-            background-color: hsl(0 62.8% 50.6%);
+            background-color: hsl(0, 100%, 71%);
         }
 
         .log-container {
@@ -278,31 +278,27 @@
             transform-origin: 100px 100px;
         }
 
-        /* Styling Slider (Threshold Inputs) */
+        /* Styling Slider (Threshold Inputs)
         input[type="range"] {
-            /* Dasar styling untuk track */
             -webkit-appearance: none;
             width: 100%;
-            height: 6px; /* Tinggi track */
-            background: hsl(240 3.7% 15.9%); /* Warna track sekunder (background card/border) */
+            height: 6px; Tinggi track 
+            background: hsl(240 3.7% 15.9%);
             border-radius: 4px;
-            margin-top: 8px; /* Sedikit jarak dari label */
+            margin-top: 8px;
         }
 
-        /* Chrome/Safari/Blink (Thumb) */
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 16px; /* Ukuran thumb */
+            width: 16px;
             height: 16px;
-            border-radius: 50%; /* Bulat */
-            /* Warna: Menggunakan warna aksen terang (seperti hijau/cyan di tema dark) */
+            border-radius: 50%; 
             background: hsl(207, 35%, 58%); 
             cursor: pointer;
-            border: 3px solid hsl(240 10% 3.9%); /* Border agar terlihat menonjol dari background */
+            border: 3px solid hsl(240 10% 3.9%); 
             box-shadow: 0 0 2px hsl(207, 35%, 58%);
         }
 
-        /* Firefox (Thumb) */
         input[type="range"]::-moz-range-thumb {
             width: 16px;
             height: 16px;
@@ -310,7 +306,7 @@
             background: hsl(207, 35%, 58%);
             cursor: pointer;
             border: none;
-        }
+        } */
 
         /* Opsional: Memberikan indikasi warna pada track sebelum thumb (tidak selalu didukung) */
         /* Biasanya memerlukan JS untuk mengisi track-color */
