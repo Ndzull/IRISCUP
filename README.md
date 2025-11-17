@@ -31,7 +31,7 @@
 
 <h2>PROGRAM EXPLAIN: COMMUNICATION</h2>
 <img src="komunikasi.png"></img>
-<h3>1. HP / Kamera (IP Webcam) → Laptop</h3>
+<h3>HP / Kamera (IP Webcam) → Laptop</h3>
 <ul>
   <li>Media: <b>WiFi</b></li>
   <li>Protocol: <b>HTTP Stream / MJPEG</b></li>
@@ -39,7 +39,7 @@
   <li>Data yang dikirim: <b>Video stream (frame)</b> untuk proses vision.</li>
 </ul>
 
-<h3>💻 2. Laptop (main.py)</h3>
+<h3>Laptop (main.py)</h3>
 <p>Menjadi pusat pemrosesan seluruh data dan komando.</p>
 
 <h4>Laptop → ESP32</h4>
