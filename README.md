@@ -1,6 +1,7 @@
 # Ijul IRIS CUP Archive
 
 <p>bismillah aja dulu</p>
+<p>mfff mas yang flow program kebanyakan aku minta tolong fpt buat nulisin, ngejer DL JAM 5 20 MENIT LAGI</p>
 
 <h2>FLOW PROGRAM (kasar)</h2>
 <p>HP(IP WEBCAM) --(WIFI/TCP)--> Laptop(main control program) --(WIFI/TCP)--> ESP32 --(selanjutnya urusan electrical)</p>
@@ -262,52 +263,115 @@ ESP32 (ujung output) kirim data untuk menjalankan robot
 </ul>
 
 <h2>PROGRAM EXPLAIN: CONFIGURATION CONTROL</h2>
-<!-- <img src="konfigurasikontrol.png"></img> -->
-<h3>Input Kendali</h3>
+<img src="konfigurasikontrol.png"></img>
+<h3>Laptop</h3>
 <ul>
-  <li><b>Lane Angle</b> -> dihitung dari hasil BEV + Hough transform</li>
-  <li><b>Lane Status</b> -> Detected / Lost</li>
-  <li><b>Robot Position</b> -> left / center / right</li>
-  <li><b>Obstacle Distance</b> -> dikirim dari ESP32 via UDP</li>
+  <li><b>main.py</b><br>
+      Merupakan program utama yang menjalankan seluruh proses. File ini menjadi titik awal ketika sistem dimulai.</li>
+
+  <li><b>vision.py (robot baca kamera)</b><br>
+      Program membaca input visual dari kamera/HP, kemudian melakukan deteksi objek atau kondisi tertentu. Hasil deteksi dikirim ke modul pengambil keputusan.</li>
+
+  <li><b>Command START/STOP</b><br>
+      Berdasarkan hasil proses vision.py, sistem menghasilkan perintah seperti <i>START</i> atau <i>STOP</i> untuk mengendalikan robot.</li>
+
+  <li><b>vision.py control.py</b><br>
+      Modul ini bertanggung jawab mengubah perintah yang dihasilkan menjadi data kontrol yang siap dikirim ke ESP32.</li>
+
+  <li><b>Base Station (Control Panel)</b><br>
+      Panel kendali yang digunakan operator untuk memantau status robot dan memberikan perintah manual bila diperlukan. Informasi dari robot juga dikirim kembali ke panel ini.</li>
+
+  <li><b>HP/Kamera</b><br>
+      Digunakan untuk menyediakan input visual yang akan diproses oleh vision.py untuk mendeteksi keadaan lingkungan atau target.</li>
 </ul>
 
-<h3>Decision Making (RobotController)</h3>
-<p>Robot menggunakan finite-state logic:</p>
+<hr>
+
+<h3>ESP32</h3>
 <ul>
-  <li><b>normal</b> — mengikuti marka jalan (PID steering)</li>
-  <li><b>avoid</b> — obstacle dekat → belok kanan</li>
-  <li><b>return_left</b> — setelah obstacle hilang → kembali ke jalur</li>
+  <li>ESP32 menerima data kontrol dari <b>vision.py control.py</b> melalui komunikasi jaringan.</li>
+  <li>Data ini kemudian diteruskan ke STM32 untuk dieksekusi pada modul motor atau sensor.</li>
 </ul>
 
-<h3>Output Kendali</h3>
+<hr>
+
+<h3>STM32</h3>
 <ul>
-  <li><b>Steering Angle</b> (−45° sampai +45°)</li>
-  <li><b>Speed PWM</b>, ditentukan dari kurva:
-    <ul>
-      <li>Sisi belok besar → PWM rendah</li>
-      <li>Jalan lurus → PWM tinggi</li>
-    </ul>
-  </li>
+  <li><b>Robot baca sensor</b><br>
+      STM32 membaca data sensor (ultrasonik, encoder, IMU, dll). Hasil pembacaan ini dikirim kembali ke ESP32.</li>
 </ul>
 
-<h3>Pengiriman ke ESP32</h3>
-<ul>
-  <li>Media: <b>WiFi</b></li>
-  <li>Protocol: <b>UDP</b></li>
-  <li>Data Format: <code>steer,speed\n</code></li>
-</ul>
+<hr>
 
-<h3>Peran ESP32</h3>
-<ul>
-  <li>Menerapkan PWM ke motor DC</li>
-  <li>Menggerakkan servo steering</li>
-  <li>Mengirim data <b>distance (cm)</b> kembali ke Laptop</li>
-</ul>
+<h3>Alur utama sistem</h3>
+<ol>
+  <li>Kamera mengirimkan citra ke laptop.</li>
+  <li><i>vision.py</i> memproses citra → menghasilkan deteksi.</li>
+  <li>Hasil deteksi memicu <i>Command START/STOP</i>.</li>
+  <li><i>vision.py control.py</i> mengubah perintah menjadi data kontrol.</li>
+  <li>Data dikirim ke ESP32.</li>
+  <li>ESP32 meneruskan ke STM32.</li>
+  <li>STM32 menjalankan aktuator & membaca sensor.</li>
+  <li>Data sensor kembali ke ESP32 → laptop → Base Station.</li>
+</ol>
 
+<p>Struktur ini membuat robot bisa berjalan secara otomatis maupun manual dengan pengawasan operator.</p>
 <h3>Telemetry</h3>
 <p>
 Semua data kendali (angle, speed, status, obstacle) dikirim ke Base Station melalui WebSocket (TCP).
 </p>
+<h2>PROGRAM EXPLAIN: KINEMATIC CONTROL</h2>
+<img src="kinematikakontrol.png"></img>
+<ol>
+  <li>
+    <b>Input diterima dari Vision:</b><br>
+    Sudut lane (<i>angle_deg</i>), status jalur, dan data obstacle 
+    (<i>detected</i>, <i>distance_cm</i>).
+  </li>
+
+  <li>
+    <b>Pengecekan Obstacle:</b><br>
+    Jika obstacle terdeteksi & jarak < 40 cm → robot masuk <i>state = "avoid"</i> 
+    dan belok kanan (steer = 45°, speed = 700).
+  </li>
+
+  <li>
+    <b>State Machine Kendali:</b>
+    <ul>
+      <li><b>avoid</b>: terus menghindar sampai obstacle hilang atau jarak > 60 cm.</li>
+      <li><b>return_left</b>: robot belok kiri untuk kembali ke jalur sampai sudut < 15°.</li>
+      <li><b>normal</b>: tidak ada obstacle, lanjut pakai PID + smoothing.</li>
+    </ul>
+  </li>
+
+  <li>
+    <b>Smoothing Sudut (low-pass filter):</b><br>
+    Sudut baru = α × sudut_baru + (1–α) × sudut_sebelumnya
+  </li>
+
+  <li>
+    <b>PID Steering:</b><br>
+    Sudut smooth dikirim ke PID → menghasilkan nilai steering yang lebih stabil.
+  </li>
+
+  <li>
+    <b>Limit Steering:</b><br>
+    Steering dibatasi pada rentang −45° hingga 45°.
+  </li>
+
+  <li>
+    <b>Penentuan Kecepatan Berdasarkan Besar Steering:</b><br>
+    • Sudut besar → speed rendah<br>
+    • Sudut kecil → speed tinggi
+  </li>
+
+  <li>
+    <b>Output Motor Command:</b><br>
+    Controller mengembalikan <code>(steer, speed)</code> untuk dikirim ke motor.
+  </li>
+</ol>
+
+
 
 <h2>ISI HATI IJUL</h2>
 <p>Mff mas mesoh, ini definisi menikmati proses</p>
